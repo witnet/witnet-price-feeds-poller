@@ -1,0 +1,12 @@
+[contract]
+# The contracts the poller needs to interact with
+wbi = "0xaa1E5aD32a78C1b33A2E364bD009E02da55294Ac"
+pricefeed = "0x37B147eA5be2e4998fD6A48F9D1337aF37B04B7B"
+
+[account]
+# The ethereum address which will create the transactions
+# (needs to have a high enough balance)
+
+address = "0xa550Cf4F03Bd2417Cf83c8a652703cdC33c016ee"
+
+
