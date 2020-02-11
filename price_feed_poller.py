@@ -68,27 +68,59 @@ def handle_read_data_request(w3, pricefeedcontract, account_addr):
       return False
     
     # Check if transaction was succesful
-    if receipt['status']: 
-      btc_price = pricefeedcontract.functions.bitcoinPrice().call()
-      print(f"Completed price update. Latest bitcoin price is {btc_price}")
+    if receipt['status']:
+      try:
+        btc_price = pricefeedcontract.functions.bitcoinPrice().call()
+        print(f"Completed price update. Latest bitcoin price is {btc_price}")
+      except:
+        # At this point we know the transaction ocurred but we could not get the latest state. Retry later.
+        log_exception_state()
+        return True
     else:
       print(
         f"Read DR result failed. Retrying in next iteration."
       )  
     return receipt['status']
 
+def log_exception_state():
+  # log the error and wait 5 seconds before next iteration
+  print("Error getting the state of the contract. Re-trying in next iterations")
+  time.sleep(5)
+
+
 def log_loop(w3, wbicontract, pricefeedcontract, account, poll_interval):
 
     print("Checking status of contracts...")
     while True:
+
       # Get current Id of the DR
-      currentId =  pricefeedcontract.functions.lastRequestId().call()
-      print("Current Id is %d" % currentId)
+      try:
+        currentId =  pricefeedcontract.functions.lastRequestId().call()
+        print("Current Id is %d" % currentId)
+      except:
+        # Error calling the state of the contract. Wait and re-try
+        log_exception_state()
+        continue
+
+      try:
+        contract_status = pricefeedcontract.functions.pending().call()
+      except:
+        # Error calling the state of the contract. Wait and re-try
+        log_exception_state()
+        continue
 
       # Check the state of the contract
-      if pricefeedcontract.functions.pending().call():
+      if contract_status:
+
         # Check if the result is ready
-        if len(wbicontract.functions.readResult(currentId).call()):
+        try:
+          res_length = wbicontract.functions.readResult(currentId).call()
+        except:
+          # Error calling the state of the contract. Wait and re-try
+          log_exception_state()
+          continue
+
+        if len(res_length):
           # Read the result
           success = handle_read_data_request(w3, pricefeedcontract, account)
           if success:
