@@ -9,4 +9,6 @@ pricefeed = "0x37B147eA5be2e4998fD6A48F9D1337aF37B04B7B"
 
 address = "0xa550Cf4F03Bd2417Cf83c8a652703cdC33c016ee"
 
-
+[network]
+# The provider to which the poller needs to connect
+provider = "http://127.0.0.1:8545"

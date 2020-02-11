@@ -1,11 +1,8 @@
 import json
-from web3.auto import w3
-from config import config
-
 
 # Return the wbi contract, given a Ethereum address from "config.toml"
-def wbi():
-  contract_address = config["contract"]["wbi"]
+def wbi(w3, config_file):
+  contract_address = config_file["contract"]["wbi"]
   # ABI generated using
   # https://remix.ethereum.org
   with open("wbi_abi.json") as json_file:
@@ -13,8 +10,9 @@ def wbi():
     contract = w3.eth.contract(contract_address, abi=contract_abi)
     return contract
 
-def pricefeed():
-  contract_address = config["contract"]["pricefeed"]
+# Return the pricefeed contract, given a Ethereum address from "config.toml"
+def pricefeed(w3, config_file):
+  contract_address = config_file["contract"]["pricefeed"]
     # ABI generated using
     # https://remix.ethereum.org
   with open("pricefeed_abi.json") as json_file:
@@ -22,5 +20,3 @@ def pricefeed():
     contract = w3.eth.contract(contract_address, abi=contract_abi)
     return contract
 
-wbi = wbi()
-pricefeed = pricefeed()

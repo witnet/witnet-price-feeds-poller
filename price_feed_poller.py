@@ -1,17 +1,15 @@
 #!/usr/bin/env python3
+import argparse
 import json
 import socket
 import sys
 import time
-from web3.auto import w3
+from web3 import Web3, exceptions
 from contract import pricefeed, wbi
-from config import config
-
+from config import load_config
 
 # Post a data request to the post_dr method of the WBI contract
-def handle_requestUpdate():
-    # set pre-funded account as sender
-    account_addr = config["account"]["address"]
+def handle_requestUpdate(w3, pricefeedcontract, account_addr):
 
     # Check that the accout has enough balance
     balance = w3.eth.getBalance(account_addr)
@@ -20,75 +18,121 @@ def handle_requestUpdate():
 
     print(f"Got {balance} wei")
 
-
-    dr_id = pricefeed.functions.requestUpdate().transact(
+    # Hardcoded gas since it does not estimate well
+    dr_id = pricefeedcontract.functions.requestUpdate().transact(
         {"from": account_addr, "gas": 310000, "value": 310000000000000})
-    post_tx_hash = bytes(dr_id)
-    w3.eth.waitForTransactionReceipt(dr_id)
-    requestId = pricefeed.functions.lastRequestId().call()
 
-    print(
+    try:     
+      # Get receipt of the transaction   
+      receipt = w3.eth.waitForTransactionReceipt(dr_id)
+
+    except exceptions.TimeExhausted:
+      print(
+        f"Transaction timeout reached and dr post not included in the block. Retrying in next iteration."
+      )
+      return False
+
+    # Check if transaction was succesful
+    if receipt['status']: 
+      print(
         f"Data request posted successfully! Ethereum transaction hash:\n{dr_id.hex()}"
-    )
-    return requestId
+      )
+    else:
+      print(
+        f"Data request post transaction failed. Retrying in next iteration"
+      )  
+    return receipt['status']
 
-def handle_read_data_request():
-    # We got a PostDataRequest event!
+def handle_read_data_request(w3, pricefeedcontract, account_addr):
+    # We got a Read DR request!
     print(f"Got data complete request")
 
-     # set pre-funded account as sender
-    account_addr = config["account"]["address"]
-
     # Check that the accout has enough balance
     balance = w3.eth.getBalance(account_addr)
     if balance == 0:
         raise Exception("Account does not have any funds")
 
     print(f"Got {balance} wei")
-    read_id = pricefeed.functions.completeUpdate().transact(
+        
+    # Hardcoded gas since it does not estimate well
+    read_id = pricefeedcontract.functions.completeUpdate().transact(
         {"from": account_addr, "gas": 310000})
-    post_tx_hash = bytes(read_id)
-    w3.eth.waitForTransactionReceipt(read_id)
 
+    try:     
+      # Get receipt of the transaction
+      receipt = w3.eth.waitForTransactionReceipt(read_id)
+    except exceptions.TimeExhausted:
+      print(
+        f"Transaction timeout reached and result read not included in the block. Retrying in next iteration."
+      )
+      return False
+    
+    # Check if transaction was succesful
+    if receipt['status']: 
+      btc_price = pricefeedcontract.functions.bitcoinPrice().call()
+      print(f"Completed price update. Latest bitcoin price is {btc_price}")
+    else:
+      print(
+        f"Read DR result failed. Retrying in next iteration."
+      )  
+    return receipt['status']
 
-    btc_price = pricefeed.functions.bitcoinPrice().call()
+def log_loop(w3, wbicontract, pricefeedcontract, account, poll_interval):
 
-    print(f"Completed price update. Latest bitcoin price is {btc_price}")
-
-
-def log_loop(fromBlock, poll_interval):
-    print("Waiting for PostDataRequest events...")
-    currentId = handle_requestUpdate()
-    print(currentId)
-    post_result_filter = wbi.events.PostedResult().createFilter(
-        fromBlock=fromBlock,
-        argument_filters={'_id':currentId}
-    )
+    print("Checking status of contracts...")
     while True:
-        for event in post_result_filter.get_new_entries():
-            handle_read_data_request()
-            print("Waiting for PostDataRequest events...")
-            currentId = handle_requestUpdate()
-            post_result_filter = wbi.events.PostedResult().createFilter(
-              fromBlock=fromBlock,
-              argument_filters={'_id':currentId}
-            )
-            ## Only handle first event
-            #return
-        time.sleep(poll_interval)
+      # Get current Id of the DR
+      currentId =  pricefeedcontract.functions.lastRequestId().call()
+      print("Current Id is %d" % currentId)
+
+      # Check the state of the contract
+      if pricefeedcontract.functions.pending().call():
+        # Check if the result is ready
+        if len(wbicontract.functions.readResult(currentId).call()):
+          # Read the result
+          success = handle_read_data_request(w3, pricefeedcontract, account)
+          if success:
+            # Send  a new request
+            handle_requestUpdate(w3, pricefeedcontract, account)
+        else:
+          # Result not ready. Wait for following group
+          print("Waiting for Result for DR %d" % currentId)
+      else:
+        # Contract waiting for next request to be sent
+        handle_requestUpdate(w3, pricefeedcontract, account)
+
+      # Loop
+      time.sleep(poll_interval)
 
 
-def main():
+def main(args):
+    # Load the config from the config file
+    config = load_config(args.config_file)
+
+    provider = args.provider if args.provider else  config['network']['provider']
+    # Open web3 provider from the arguments provided
+    w3 = Web3(Web3.HTTPProvider(provider, request_kwargs={'timeout': 60}))
+    # Load the pricefeed contract
+    pricefeedcontract = pricefeed(w3, config)
+    # Get account
+    account = config["account"]["address"]
+    # Load the wbi contract
+    wbicontract = wbi(w3, config)
+
     current_block = w3.eth.blockNumber
     print(f"Current block: {current_block}")
-    # Only listen to new events
-    fromBlock = current_block
-    ## Listen to all events
-    #fromBlock = 0
     
     poll_interval = 60  # seconds
-    log_loop(current_block, poll_interval)
+    # Call main loop
+    log_loop(w3, wbicontract, pricefeedcontract, account, poll_interval)
 
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser(description='Connect to an Ethereum provider.')
+    parser.add_argument('--config_file', dest='config_file', action='store', required=True,
+                    help='provide the config toml file with the contract and provider details')
+    parser.add_argument('--provider', dest='provider', action='store', required=False,
+                    help='web3 provider to which the poller should connect. If not provided it reads from config')
+
+    args = parser.parse_args()
+    main(args)

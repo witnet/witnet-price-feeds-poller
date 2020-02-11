@@ -1,0 +1,14 @@
+[contract]
+# The contracts the poller needs to interact with
+wbi = "0xCfBD4047FeE204f85c2ba4eb965134C5C94654a2"
+pricefeed = "0x70E55DF90aA77970Ce6E43029010e0B567E0ADa8"
+
+[account]
+# The ethereum address which will create the transactions
+# (needs to have a high enough balance)
+
+address = "0xa550Cf4F03Bd2417Cf83c8a652703cdC33c016ee"
+
+[network]
+# The provider to which the poller needs to connect
+provider = "http://127.0.0.1:8544"
