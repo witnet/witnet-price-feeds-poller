@@ -5,10 +5,10 @@ import socket
 import sys
 import time
 from web3 import Web3, exceptions
-from contract import pricefeed, wbi
+from contract import pricefeed, wrb
 from config import load_config
 
-# Post a data request to the post_dr method of the WBI contract
+# Post a data request to the post_dr method of the WRB contract
 def handle_requestUpdate(w3, pricefeedcontract, account_addr):
 
     # Check that the accout has enough balance
@@ -88,7 +88,7 @@ def log_exception_state():
   time.sleep(5)
 
 
-def log_loop(w3, wbicontract, pricefeedcontract, account, poll_interval):
+def log_loop(w3, wrbcontract, pricefeedcontract, account, poll_interval):
 
     print("Checking status of contracts...")
     while True:
@@ -114,7 +114,7 @@ def log_loop(w3, wbicontract, pricefeedcontract, account, poll_interval):
 
         # Check if the result is ready
         try:
-          res_length = wbicontract.functions.readResult(currentId).call()
+          res_length = wrbcontract.functions.readResult(currentId).call()
         except:
           # Error calling the state of the contract. Wait and re-try
           log_exception_state()
@@ -148,15 +148,15 @@ def main(args):
     pricefeedcontract = pricefeed(w3, config)
     # Get account
     account = config["account"]["address"]
-    # Load the wbi contract
-    wbicontract = wbi(w3, config)
+    # Load the WRB contract
+    wrbcontract = wrb(w3, config)
 
     current_block = w3.eth.blockNumber
     print(f"Current block: {current_block}")
     
     poll_interval = 60  # seconds
     # Call main loop
-    log_loop(w3, wbicontract, pricefeedcontract, account, poll_interval)
+    log_loop(w3, wrbcontract, pricefeedcontract, account, poll_interval)
 
 
 if __name__ == '__main__':
