@@ -9,7 +9,7 @@ from contract import pricefeed, wrb
 from config import load_config
 
 # Post a data request to the post_dr method of the WRB contract
-def handle_requestUpdate(w3, pricefeedcontract, account_addr):
+def handle_requestUpdate(w3, pricefeedcontract, account_addr, gas, request_value):
 
     # Check that the accout has enough balance
     balance = w3.eth.getBalance(account_addr)
@@ -20,7 +20,7 @@ def handle_requestUpdate(w3, pricefeedcontract, account_addr):
 
     # Hardcoded gas since it does not estimate well
     dr_id = pricefeedcontract.functions.requestUpdate().transact(
-        {"from": account_addr, "gas": 310000, "value": 310000000000000})
+        {"from": account_addr, "gas": gas, "value": request_value})
 
     try:     
       # Get receipt of the transaction   
@@ -43,7 +43,7 @@ def handle_requestUpdate(w3, pricefeedcontract, account_addr):
       )  
     return receipt['status']
 
-def handle_read_data_request(w3, pricefeedcontract, account_addr):
+def handle_read_data_request(w3, pricefeedcontract, account_addr, gas):
     # We got a Read DR request!
     print(f"Got data complete request")
 
@@ -56,7 +56,7 @@ def handle_read_data_request(w3, pricefeedcontract, account_addr):
         
     # Hardcoded gas since it does not estimate well
     read_id = pricefeedcontract.functions.completeUpdate().transact(
-        {"from": account_addr, "gas": 310000})
+        {"from": account_addr, "gas": gas})
 
     try:     
       # Get receipt of the transaction
@@ -88,7 +88,7 @@ def log_exception_state():
   time.sleep(5)
 
 
-def log_loop(w3, wrbcontract, pricefeedcontract, account, poll_interval):
+def log_loop(w3, wrbcontract, pricefeedcontract, account, gas, request_value, poll_interval):
 
     print("Checking status of contracts...")
     while True:
@@ -122,16 +122,16 @@ def log_loop(w3, wrbcontract, pricefeedcontract, account, poll_interval):
 
         if len(res_length):
           # Read the result
-          success = handle_read_data_request(w3, pricefeedcontract, account)
+          success = handle_read_data_request(w3, pricefeedcontract, account, gas)
           if success:
             # Send  a new request
-            handle_requestUpdate(w3, pricefeedcontract, account)
+            handle_requestUpdate(w3, pricefeedcontract, account, gas, request_value)
         else:
           # Result not ready. Wait for following group
           print("Waiting for Result for DR %d" % currentId)
       else:
         # Contract waiting for next request to be sent
-        handle_requestUpdate(w3, pricefeedcontract, account)
+        handle_requestUpdate(w3, pricefeedcontract, account, gas, request_value)
 
       # Loop
       time.sleep(poll_interval)
@@ -148,15 +148,17 @@ def main(args):
     pricefeedcontract = pricefeed(w3, config)
     # Get account
     account = config["account"]["address"]
+    gas = config["network"].get("gas", 4000000)
+    # 200 szabo as defined in the default pricefeed smart contract
+    request_value = config["network"].get("request_value", 200000000000000)
     # Load the WRB contract
     wrbcontract = wrb(w3, config)
-
     current_block = w3.eth.blockNumber
     print(f"Current block: {current_block}")
     
     poll_interval = 60  # seconds
     # Call main loop
-    log_loop(w3, wrbcontract, pricefeedcontract, account, poll_interval)
+    log_loop(w3, wrbcontract, pricefeedcontract, account, gas, request_value, poll_interval)
 
 
 if __name__ == '__main__':
