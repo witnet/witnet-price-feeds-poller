@@ -7,7 +7,7 @@ class TomlError(Exception):
 def load_config(filename):
   config = toml.load(filename)
   # Check the necessary fields are provided in the toml
-  if  config.get('contract') is None or config['contract'].get('pricefeed') is None or config['contract'].get('wrb') is None:
+  if  config.get('contract') is None or config['contract'].get('pricefeeds') is None or config['contract'].get('wrb') is None:
     raise TomlError("Please specify pricefeed and wrb as \n[contract]\npricefeed=0xaaaa\nwrb=0xbbbb")
   elif  config.get('account') is None or config['account'].get('address') is None:
     raise TomlError("Please specify account as \n[account]\naddress=0xaaaa")

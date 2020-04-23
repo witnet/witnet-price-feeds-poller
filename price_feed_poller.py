@@ -35,11 +35,11 @@ def handle_requestUpdate(w3, pricefeedcontract, account_addr, gas, request_value
     # Check if transaction was succesful
     if receipt['status']: 
       print(
-        f"Data request posted successfully! Ethereum transaction hash:\n{dr_id.hex()}"
+        f"Data request for contract {pricefeedcontract.address} posted successfully! Ethereum transaction hash:\n{dr_id.hex()}"
       )
     else:
       print(
-        f"Data request post transaction failed. Retrying in next iteration"
+        f"Data request for contract {pricefeedcontract.address} post transaction failed. Retrying in next iteration"
       )  
     return receipt['status']
 
@@ -70,8 +70,8 @@ def handle_read_data_request(w3, pricefeedcontract, account_addr, gas):
     # Check if transaction was succesful
     if receipt['status']:
       try:
-        btc_price = pricefeedcontract.functions.bitcoinPrice().call()
-        print(f"Completed price update. Latest bitcoin price is {btc_price}")
+        price = pricefeedcontract.functions.lastPrice().call()
+        print(f"Completed price update for contract {pricefeedcontract.address}. Latest price is {price}")
       except:
         # At this point we know the transaction ocurred but we could not get the latest state. Retry later.
         log_exception_state()
@@ -88,50 +88,52 @@ def log_exception_state():
   time.sleep(5)
 
 
-def log_loop(w3, wrbcontract, pricefeedcontract, account, gas, request_value, poll_interval):
+def log_loop(w3, wrbcontract, pricefeedcontracts, account, gas, request_value, poll_interval):
 
     print("Checking status of contracts...")
     while True:
-
+      contracts_information = []
       # Get current Id of the DR
-      try:
-        currentId =  pricefeedcontract.functions.lastRequestId().call()
-        print("Current Id is %d" % currentId)
-      except:
-        # Error calling the state of the contract. Wait and re-try
-        log_exception_state()
-        continue
-
-      try:
-        contract_status = pricefeedcontract.functions.pending().call()
-      except:
-        # Error calling the state of the contract. Wait and re-try
-        log_exception_state()
-        continue
-
-      # Check the state of the contract
-      if contract_status:
-
-        # Check if the result is ready
+      for feed in pricefeedcontracts:
         try:
-          res_length = wrbcontract.functions.readResult(currentId).call()
+          currentId = feed.functions.lastRequestId().call()
+          contract_status = feed.functions.pending().call()
+          contracts_information.append({
+            "feed" : feed,
+            "status" : contract_status,
+            "currentId" : currentId
+          })
+          print("Current Id for contract %s is %d" % (feed.address, currentId))
         except:
           # Error calling the state of the contract. Wait and re-try
           log_exception_state()
           continue
 
-        if len(res_length):
-          # Read the result
-          success = handle_read_data_request(w3, pricefeedcontract, account, gas)
-          if success:
-            # Send  a new request
-            handle_requestUpdate(w3, pricefeedcontract, account, gas, request_value)
+      # Check the state of the contracts
+      for element in contracts_information:
+
+        # Check if the result is ready
+        if element["status"]:
+
+          try:
+            res_length = wrbcontract.functions.readResult(element["currentId"]).call()
+          except:
+            # Error calling the state of the contract. Wait and re-try
+            log_exception_state()
+            continue
+
+          if len(res_length):
+            # Read the result
+            success = handle_read_data_request(w3, element["feed"], account, gas)
+            if success:
+              # Send  a new request
+              handle_requestUpdate(w3, element["feed"], account, gas, request_value)
+          else:
+            # Result not ready. Wait for following group
+            print("Waiting in contract %s for Result for DR %d" % (element["feed"].address, element["currentId"]))
         else:
-          # Result not ready. Wait for following group
-          print("Waiting for Result for DR %d" % currentId)
-      else:
-        # Contract waiting for next request to be sent
-        handle_requestUpdate(w3, pricefeedcontract, account, gas, request_value)
+          # Contract waiting for next request to be sent
+          handle_requestUpdate(w3, element["feed"], account, gas, request_value)
 
       # Loop
       time.sleep(poll_interval)
@@ -145,7 +147,7 @@ def main(args):
     # Open web3 provider from the arguments provided
     w3 = Web3(Web3.HTTPProvider(provider, request_kwargs={'timeout': 60}))
     # Load the pricefeed contract
-    pricefeedcontract = pricefeed(w3, config)
+    pricefeedcontracts = pricefeed(w3, config)
     # Get account
     account = config["account"]["address"]
     gas = config["network"].get("gas", 4000000)
@@ -158,7 +160,7 @@ def main(args):
     
     poll_interval = 60  # seconds
     # Call main loop
-    log_loop(w3, wrbcontract, pricefeedcontract, account, gas, request_value, poll_interval)
+    log_loop(w3, wrbcontract, pricefeedcontracts, account, gas, request_value, poll_interval)
 
 
 if __name__ == '__main__':
