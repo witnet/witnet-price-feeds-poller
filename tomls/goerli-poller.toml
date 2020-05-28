@@ -1,0 +1,16 @@
+[contract]
+# The contracts the poller needs to interact with
+wrb = "0x916B67a6D470aF09Fd9379d6C67f8552778346f9"
+pricefeeds = ["0x1a02a812C62f630aa8CD69dE6fD29a64B9F0CB7f",
+              "0x7030A4160e21Cf012F66458574ed6B91982EcDF2",
+              "0x01b66d36B7F0bA5e76923A56377Ed3E5f56DEfc7"]
+
+[account]
+# The ethereum address which will create the transactions
+# (needs to have a high enough balance)
+
+address = "0xa550Cf4F03Bd2417Cf83c8a652703cdC33c016ee"
+
+[network]
+# The provider to which the poller needs to connect
+provider = "http://127.0.0.1:8545"
