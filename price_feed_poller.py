@@ -157,16 +157,16 @@ def main(args):
     wrbcontract = wrb(w3, config)
     current_block = w3.eth.blockNumber
     print(f"Current block: {current_block}")
-    
-    poll_interval = 60  # seconds
-    # Call main loop
-    log_loop(w3, wrbcontract, pricefeedcontracts, account, gas, request_value, poll_interval)
 
+    # Call main loop
+    log_loop(w3, wrbcontract, pricefeedcontracts, account, gas, request_value, args.poll_interval)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Connect to an Ethereum provider.')
     parser.add_argument('--config_file', dest='config_file', action='store', required=True,
                     help='provide the config toml file with the contract and provider details')
+    parser.add_argument('--poll_interval', dest='poll_interval', action='store', type=int, required=False, default=60, 
+                    help='seconds after which the script triggers the state of the smart contract')
     parser.add_argument('--provider', dest='provider', action='store', required=False,
                     help='web3 provider to which the poller should connect. If not provided it reads from config')
 
