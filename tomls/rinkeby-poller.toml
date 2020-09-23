@@ -1,9 +1,9 @@
 [contract]
 # The contracts the poller needs to interact with
-wrb = "0x9ad9386e6886957A50D30996e35749eC4566a5d9"
-pricefeeds = ["0x4a271E084Ab8Cd0EE9fb801AEaF65721b4eD9054",
-              "0xA7cB8b90fC2a834B59990A769D8Fe67e9D4e5d51",
-              "0x6dc14c190d90ef26D5eEA92eaf119479aCeA9482"]
+wrb = "0x0ea865236ec32b6e62912f17cf2296A6b53B8eec"
+pricefeeds = ["0x612178cdBdA117A7777d6867e54772F8cA6dcB3a",
+              "0x5dF5d38ce8Ba61aae2b302BEcf5aAA97551349AE",
+              "0x0337806d19e34302Ff4994f6558FaC27329D2170"]
 
 [account]
 # The ethereum address which will create the transactions
