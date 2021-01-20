@@ -8,18 +8,30 @@ from web3 import Web3, exceptions
 from contract import pricefeed, wrb
 from config import load_config
 
+class Rewards:
+    def __init__(self, inclusionReward, resultReward, blockReward):
+        self.inclusionReward = inclusionReward
+        self.resultReward = resultReward
+        self.blockReward = blockReward
+
+
+
 # Post a data request to the post_dr method of the WRB contract
-def handle_requestUpdate(w3, pricefeedcontract, account_addr, gas, request_value):
+def handle_requestUpdate(w3, pricefeedcontract, account_addr, gas, rewards):
 
     # Check that the accout has enough balance
     balance = w3.eth.getBalance(account_addr)
     if balance == 0:
         raise Exception("Account does not have any funds")
 
+    request_value = rewards.inclusionReward + rewards.resultReward + rewards.blockReward
     print(f"Got {balance} wei")
 
     # Hardcoded gas since it does not estimate well
-    dr_id = pricefeedcontract.functions.requestUpdate().transact(
+    dr_id = pricefeedcontract.functions.requestUpdate(
+        rewards.inclusionReward,
+        rewards.resultReward,
+        rewards.blockReward).transact(
         {"from": account_addr, "gas": gas, "value": request_value})
 
     try:     
@@ -88,7 +100,7 @@ def log_exception_state():
   time.sleep(5)
 
 
-def log_loop(w3, wrbcontract, pricefeedcontracts, account, gas, request_value, poll_interval):
+def log_loop(w3, wrbcontract, pricefeedcontracts, account, gas, rewards, poll_interval):
 
     print("Checking status of contracts...")
     while True:
@@ -127,13 +139,13 @@ def log_loop(w3, wrbcontract, pricefeedcontracts, account, gas, request_value, p
             success = handle_read_data_request(w3, element["feed"], account, gas)
             if success:
               # Send  a new request
-              handle_requestUpdate(w3, element["feed"], account, gas, request_value)
+              handle_requestUpdate(w3, element["feed"], account, gas, rewards)
           else:
             # Result not ready. Wait for following group
             print("Waiting in contract %s for Result for DR %d" % (element["feed"].address, element["currentId"]))
         else:
           # Contract waiting for next request to be sent
-          handle_requestUpdate(w3, element["feed"], account, gas, request_value)
+          handle_requestUpdate(w3, element["feed"], account, gas, rewards)
 
       # Loop
       time.sleep(poll_interval)
@@ -151,15 +163,14 @@ def main(args):
     # Get account
     account = config["account"]["address"]
     gas = config["network"].get("gas", 4000000)
-    # 200 szabo as defined in the default pricefeed smart contract
-    request_value = config["network"].get("request_value", 200000000000000)
+    rewards = Rewards(config["rewards"]["inclusionReward"], config["rewards"]["resultReward"], config["rewards"]["blockReward"])
     # Load the WRB contract
     wrbcontract = wrb(w3, config)
     current_block = w3.eth.blockNumber
     print(f"Current block: {current_block}")
 
     # Call main loop
-    log_loop(w3, wrbcontract, pricefeedcontracts, account, gas, request_value, args.poll_interval)
+    log_loop(w3, wrbcontract, pricefeedcontracts, account, gas, rewards, args.poll_interval)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Connect to an Ethereum provider.')

@@ -13,5 +13,7 @@ def load_config(filename):
     raise TomlError("Please specify account as \n[account]\naddress=0xaaaa")
   elif  config.get('network') is None or config['network'].get('provider') is None:
     raise TomlError("Please specify account as \n[network]\nprovider=127.0.0.1:8545")
+  elif  config.get('rewards') is None or config['rewards'].get('inclusionReward') is None or config['rewards'].get('resultReward') is None or config['rewards'].get('blockReward') is None:
+    raise TomlError("Please specify rewards as \n[rewards]\ninclusionReward=0\nresultReward=0\nblockReward=0")
   else:
     return config
