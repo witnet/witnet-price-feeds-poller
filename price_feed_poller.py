@@ -17,10 +17,12 @@ def handle_requestUpdate(w3, pricefeedcontract, account_addr, gas, request_value
         raise Exception("Account does not have any funds")
 
     print(f"Got {balance} wei")
+    print(w3.eth.gasPrice)
+    [inclusionReward, resultReward, blockReward] = pricefeedcontract.functions.estimateGasCost(w3.eth.gasPrice).call()
 
     # Hardcoded gas since it does not estimate well
-    dr_id = pricefeedcontract.functions.requestUpdate().transact(
-        {"from": account_addr, "gas": gas, "value": request_value})
+    dr_id = pricefeedcontract.functions.requestUpdate(inclusionReward, resultReward, blockReward).transact(
+        {"from": account_addr, "gas": gas, "value": inclusionReward+resultReward+blockReward})
 
     try:     
       # Get receipt of the transaction   
