@@ -18,11 +18,11 @@ def handle_requestUpdate(w3, pricefeedcontract, account_addr, gas, request_value
 
     print(f"Got {balance} wei")
     print(w3.eth.gasPrice)
-    [inclusionReward, resultReward, blockReward] = pricefeedcontract.functions.estimateGasCost(w3.eth.gasPrice).call()
+    reward = pricefeedcontract.functions.witnetEstimateGasCost(w3.eth.gasPrice).call()
 
     # Hardcoded gas since it does not estimate well
-    dr_id = pricefeedcontract.functions.requestUpdate(inclusionReward, resultReward, blockReward).transact(
-        {"from": account_addr, "gas": gas, "value": inclusionReward+resultReward+blockReward})
+    dr_id = pricefeedcontract.functions.requestUpdate().transact(
+        {"from": account_addr, "gas": gas, "value": reward})
 
     try:     
       # Get receipt of the transaction   
