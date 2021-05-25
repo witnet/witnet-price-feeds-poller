@@ -9,7 +9,7 @@ from contract import pricefeed, wrb
 from config import load_config
 
 # Post a data request to the post_dr method of the WRB contract
-def handle_requestUpdate(w3, pricefeedcontract, account_addr, gas, request_value):
+def handle_requestUpdate(w3, pricefeedcontract, wrbcontract, account_addr, gas, request_value):
 
     # Check that the accout has enough balance
     balance = w3.eth.getBalance(account_addr)
@@ -18,7 +18,7 @@ def handle_requestUpdate(w3, pricefeedcontract, account_addr, gas, request_value
 
     print(f"Got {balance} wei")
     print(w3.eth.gasPrice)
-    reward = pricefeedcontract.functions.witnetEstimateGasCost(w3.eth.gasPrice).call()
+    reward = wrbcontract.functions.estimateGasCost(w3.eth.gasPrice).call()
 
     # Hardcoded gas since it does not estimate well
     dr_id = pricefeedcontract.functions.requestUpdate().transact(
@@ -118,24 +118,24 @@ def log_loop(w3, wrbcontract, pricefeedcontracts, account, gas, request_value, p
         if element["status"]:
 
           try:
-            res_length = wrbcontract.functions.readResult(element["currentId"]).call()
-          except:
+            dr_tx_hash = wrbcontract.functions.readDrTxHash(element["currentId"]).call()
+          except: 
             # Error calling the state of the contract. Wait and re-try
             log_exception_state()
             continue
 
-          if len(res_length):
+          if dr_tx_hash != 0:
             # Read the result
             success = handle_read_data_request(w3, element["feed"], account, gas)
             if success:
               # Send  a new request
-              handle_requestUpdate(w3, element["feed"], account, gas, request_value)
+              handle_requestUpdate(w3, element["feed"], wrbcontract, account, gas, request_value)
           else:
             # Result not ready. Wait for following group
             print("Waiting in contract %s for Result for DR %d" % (element["feed"].address, element["currentId"]))
         else:
           # Contract waiting for next request to be sent
-          handle_requestUpdate(w3, element["feed"], account, gas, request_value)
+          handle_requestUpdate(w3, element["feed"], wrbcontract, account, gas, request_value)
 
       # Loop
       time.sleep(poll_interval)
