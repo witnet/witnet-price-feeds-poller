@@ -1,16 +1,16 @@
 [contract]
 # The contracts the poller needs to interact with
-wrb = "0xfE78ca033c5Bf9Bf34387366E0ceeE951093B5e2"
-pricefeeds = ["0x34a769efE1e574083A8b25c3d6C792e1004A1862",
-              "0x758bD6C06B1741d57E92A9167DEFB61E35Ce1Aa9",
-              "0xfbEdcBbf7BFC448Ef42F65593df8b1912cFf3dd3"]
-
+wrb = "0xAf89a59876145202a027E73340592F05B28A6D99"
+# Addresses of BtcUsdPriceFeed, EthUsdPriceFeed and GoldEurPriceFeed contracts
+pricefeeds = ["0xa3AFD68122a21c7D21Ddd95E5c077f958dA46662",
+              "0x22873c5031621eBD19D8F171e12C8E90F113cd16",
+              "0xa784093826e2894Ab3Db315f4e05F0F26407BBfF"]
 
 [account]
 # The ethereum address which will create the transactions
 # (needs to have a high enough balance)
 
-address = "0xa550Cf4F03Bd2417Cf83c8a652703cdC33c016ee"
+address = "0x8d86Bc475bEDCB08179c5e6a4d494EbD3b44Ea8B"
 
 [network]
 # The provider to which the poller needs to connect
