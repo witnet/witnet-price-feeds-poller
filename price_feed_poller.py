@@ -21,12 +21,17 @@ def handle_requestUpdate(w3, pricefeedcontract, wrbcontract, account_addr, gas, 
     reward = wrbcontract.functions.estimateGasCost(w3.eth.gasPrice).call()
 
     # Hardcoded gas since it does not estimate well
+    try:
       dr_id = pricefeedcontract.functions.requestUpdate().transact(
           {"from": account_addr, "gas": gas, "value": reward, "gasPrice": w3.eth.gasPrice}
+      )
+    except:
+      print(f"Failed when calling to", account_addr, ".requestUpdate(). Retrying in next iteration.")
+      return False
 
     try:     
       # Get receipt of the transaction   
-      receipt = w3.eth.waitForTransactionReceipt(dr_id), 60, 5)
+      receipt = w3.eth.waitForTransactionReceipt(dr_id, 60, 5)
 
     except exceptions.TimeExhausted:
       print(
@@ -57,12 +62,16 @@ def handle_read_data_request(w3, pricefeedcontract, account_addr, gas):
     print(f"Got {balance} wei")
         
     # Hardcoded gas since it does not estimate well
+    try:
       read_id = pricefeedcontract.functions.completeUpdate().transact(
           {"from": account_addr, "gas": gas, "gasPrice": w3.eth.gasPrice})
+    except:
+      print(f"Failed when calling to", account_addr, ".completeUpdate(). Retrying in next iteration.")
+      return False
 
     try:     
       # Get receipt of the transaction
-      receipt = w3.eth.waitForTransactionReceipt(read_id) , 60, 5)
+      receipt = w3.eth.waitForTransactionReceipt(read_id , 60, 5)
     except exceptions.TimeExhausted:
       print(
         f"Transaction timeout reached and result read not included in the block. Retrying in next iteration."
