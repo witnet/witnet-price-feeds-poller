@@ -9,7 +9,7 @@ from contract import pricefeed, wrb
 from config import load_config
 
 # Post a data request to the post_dr method of the WRB contract
-def handle_requestUpdate(w3, pricefeedcontract, wrbcontract, account_addr, gas, request_value):
+def handle_requestUpdate(w3, pricefeedcontract, wrbcontract, account_addr, gas, gas_price):
 
     # Check that the accout has enough balance
     balance = w3.eth.getBalance(account_addr)
@@ -17,21 +17,24 @@ def handle_requestUpdate(w3, pricefeedcontract, wrbcontract, account_addr, gas, 
         raise Exception("Account does not have any funds")
 
     print(f"Got {balance} wei")
-    print(w3.eth.gasPrice)
-    reward = wrbcontract.functions.estimateGasCost(w3.eth.gasPrice).call()
+    print(f"Gas price: {gas_price}")
+    reward = wrbcontract.functions.estimateGasCost(gas_price).call()
 
     # Hardcoded gas since it does not estimate well
     try:
-      dr_id = pricefeedcontract.functions.requestUpdate().transact(
-          {"from": account_addr, "gas": gas, "value": reward, "gasPrice": w3.eth.gasPrice}
-      )
+      dr_id = pricefeedcontract.functions.requestUpdate().transact({
+        "from": account_addr,
+        "gas": gas,
+        "gasPrice": gas_price,
+        "value": reward
+      })
     except:
       print(f"Failed when calling to", account_addr, ".requestUpdate(). Retrying in next iteration.")
       return False
 
     try:     
       # Get receipt of the transaction   
-      receipt = w3.eth.waitForTransactionReceipt(dr_id, 60, 5)
+      receipt = w3.eth.waitForTransactionReceipt(dr_id, 120, 5)
 
     except exceptions.TimeExhausted:
       print(
@@ -50,7 +53,7 @@ def handle_requestUpdate(w3, pricefeedcontract, wrbcontract, account_addr, gas, 
       )  
     return receipt['status']
 
-def handle_read_data_request(w3, pricefeedcontract, account_addr, gas):
+def handle_read_data_request(w3, pricefeedcontract, account_addr, gas, gas_price):
     # We got a Read DR request!
     print(f"Got data complete request")
 
@@ -60,11 +63,15 @@ def handle_read_data_request(w3, pricefeedcontract, account_addr, gas):
         raise Exception("Account does not have any funds")
 
     print(f"Got {balance} wei")
+    print(F"Gas price: {gas_price}")
         
     # Hardcoded gas since it does not estimate well
     try:
-      read_id = pricefeedcontract.functions.completeUpdate().transact(
-          {"from": account_addr, "gas": gas, "gasPrice": w3.eth.gasPrice})
+      read_id = pricefeedcontract.functions.completeUpdate().transact({
+        "from": account_addr,
+        "gas": gas,
+        "gasPrice": gas_price
+      })
     except:
       print(f"Failed when calling to", account_addr, ".completeUpdate(). Retrying in next iteration.")
       return False
@@ -99,7 +106,7 @@ def log_exception_state(addr):
   time.sleep(1)
 
 
-def log_loop(w3, wrbcontract, pricefeedcontracts, account, gas, request_value, poll_interval):
+def log_loop(w3, wrbcontract, pricefeedcontracts, account, gas, gas_price, poll_interval):
 
     print("Checking status of contracts...")
     while True:
@@ -135,42 +142,43 @@ def log_loop(w3, wrbcontract, pricefeedcontracts, account, gas, request_value, p
 
           if dr_tx_hash != 0:
             # Read the result
-            success = handle_read_data_request(w3, element["feed"], account, gas)
+            success = handle_read_data_request(w3, element["feed"], account, gas, gas_price)
             if success:
               # Send  a new request
-              handle_requestUpdate(w3, element["feed"], wrbcontract, account, gas, request_value)
+              handle_requestUpdate(w3, element["feed"], wrbcontract, account, gas, gas_price)
           else:
             # Result not ready. Wait for following group
             print("Waiting in contract %s for Result for DR %d" % (element["feed"].address, element["currentId"]))
         else:
           # Contract waiting for next request to be sent
-          handle_requestUpdate(w3, element["feed"], wrbcontract, account, gas, request_value)
+          handle_requestUpdate(w3, element["feed"], wrbcontract, account, gas, gas_price)
 
       # Loop
       time.sleep(poll_interval)
 
 
 def main(args):
-    # Load the config from the config file
+    # Load the config from the config file:
     config = load_config(args.config_file)
-
+    # Load providers:
     provider = args.provider if args.provider else  config['network']['provider']
-    # Open web3 provider from the arguments provided
+    # Open web3 provider from the arguments provided:
     w3 = Web3(Web3.HTTPProvider(provider, request_kwargs={'timeout': 60}))
-    # Load the pricefeed contract
+    # Load the pricefeed contract:
     pricefeedcontracts = pricefeed(w3, config)
-    # Get account
+    # Get account:
     account = config["account"]["address"]
+    # Get gas limit, defaults to 4 million units:
     gas = config["network"].get("gas", 4000000)
-    # 200 szabo as defined in the default pricefeed smart contract
-    request_value = config["network"].get("request_value", 200000000000000)
-    # Load the WRB contract
+    # Get gas price, defaults to 100 gwei:
+    gas_price = config["network"].get("gas_price", 100000000000) 
+    # Load the WRB contract:
     wrbcontract = wrb(w3, config)
     current_block = w3.eth.blockNumber
     print(f"Current block: {current_block}")
 
     # Call main loop
-    log_loop(w3, wrbcontract, pricefeedcontracts, account, gas, request_value, args.poll_interval)
+    log_loop(w3, wrbcontract, pricefeedcontracts, account, gas, gas_price, args.poll_interval)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Connect to an Ethereum provider.')

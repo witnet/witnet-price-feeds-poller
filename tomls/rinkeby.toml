@@ -9,9 +9,10 @@ pricefeeds = ["0x49C0BCce51a8B28f92d008394F06d5B259657F33",
 [account]
 # The ethereum address which will create the transactions
 # (needs to have a high enough balance)
-
 address = "0x8d86Bc475bEDCB08179c5e6a4d494EbD3b44Ea8B"
 
 [network]
 # The provider to which the poller needs to connect
 provider = "http://127.0.0.1:8544"
+gas_price = 10000000000
+gas = 4000000
