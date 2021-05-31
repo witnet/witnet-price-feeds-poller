@@ -21,8 +21,8 @@ def handle_requestUpdate(w3, pricefeedcontract, wrbcontract, account_addr, gas, 
     reward = wrbcontract.functions.estimateGasCost(w3.eth.gasPrice).call()
 
     # Hardcoded gas since it does not estimate well
-    dr_id = pricefeedcontract.functions.requestUpdate().transact(
-        {"from": account_addr, "gas": gas, "value": reward})
+      dr_id = pricefeedcontract.functions.requestUpdate().transact(
+          {"from": account_addr, "gas": gas, "value": reward, "gasPrice": w3.eth.gasPrice}
 
     try:     
       # Get receipt of the transaction   
@@ -57,8 +57,8 @@ def handle_read_data_request(w3, pricefeedcontract, account_addr, gas):
     print(f"Got {balance} wei")
         
     # Hardcoded gas since it does not estimate well
-    read_id = pricefeedcontract.functions.completeUpdate().transact(
-        {"from": account_addr, "gas": gas})
+      read_id = pricefeedcontract.functions.completeUpdate().transact(
+          {"from": account_addr, "gas": gas, "gasPrice": w3.eth.gasPrice})
 
     try:     
       # Get receipt of the transaction
