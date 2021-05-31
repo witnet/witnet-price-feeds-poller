@@ -76,7 +76,7 @@ def handle_read_data_request(w3, pricefeedcontract, account_addr, gas):
         print(f"Completed price update for contract {pricefeedcontract.address}. Latest price is {price}")
       except:
         # At this point we know the transaction ocurred but we could not get the latest state. Retry later.
-        log_exception_state()
+        log_exception_state(pricefeedcontract.address)
         return True
     else:
       print(
@@ -84,10 +84,10 @@ def handle_read_data_request(w3, pricefeedcontract, account_addr, gas):
       )  
     return receipt['status']
 
-def log_exception_state():
+def log_exception_state(addr):
   # log the error and wait 5 seconds before next iteration
-  print("Error getting the state of the contract. Re-trying in next iterations")
-  time.sleep(5)
+  print("Error getting the state of contract", addr, ". Re-trying in next iterations")
+  time.sleep(1)
 
 
 def log_loop(w3, wrbcontract, pricefeedcontracts, account, gas, request_value, poll_interval):
@@ -108,7 +108,7 @@ def log_loop(w3, wrbcontract, pricefeedcontracts, account, gas, request_value, p
           print("Current Id for contract %s is %d" % (feed.address, currentId))
         except:
           # Error calling the state of the contract. Wait and re-try
-          log_exception_state()
+          log_exception_state(feed.address)
           continue
 
       # Check the state of the contracts
@@ -121,7 +121,7 @@ def log_loop(w3, wrbcontract, pricefeedcontracts, account, gas, request_value, p
             dr_tx_hash = wrbcontract.functions.readDrTxHash(element["currentId"]).call()
           except: 
             # Error calling the state of the contract. Wait and re-try
-            log_exception_state()
+            log_exception_state(wrbcontract.address)
             continue
 
           if dr_tx_hash != 0:
