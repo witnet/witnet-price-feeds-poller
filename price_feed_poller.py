@@ -26,7 +26,7 @@ def handle_requestUpdate(w3, pricefeedcontract, wrbcontract, account_addr, gas, 
 
     try:     
       # Get receipt of the transaction   
-      receipt = w3.eth.waitForTransactionReceipt(dr_id)
+      receipt = w3.eth.waitForTransactionReceipt(dr_id), 60, 5)
 
     except exceptions.TimeExhausted:
       print(
@@ -62,7 +62,7 @@ def handle_read_data_request(w3, pricefeedcontract, account_addr, gas):
 
     try:     
       # Get receipt of the transaction
-      receipt = w3.eth.waitForTransactionReceipt(read_id)
+      receipt = w3.eth.waitForTransactionReceipt(read_id) , 60, 5)
     except exceptions.TimeExhausted:
       print(
         f"Transaction timeout reached and result read not included in the block. Retrying in next iteration."
