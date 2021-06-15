@@ -223,9 +223,9 @@ def main(args):
     # Get gas price, defaults to 100 gwei:
     gas_price = config["network"].get("gas_price", 100000000000) 
     # Get HTTP-JSON-RPC waiting timeout (in secs):
-    tx_waiting_timeout_secs = config["network"].get("tx_waiting_timeout_secs", 120) 
+    tx_waiting_timeout_secs = config["network"].get("tx_waiting_timeout_secs", 130) 
     # Get HTTP-JSON-RPC polling latency timeout (in secs):
-    tx_polling_latency_secs = config["network"].get("tx_polling_latency_secs", 5) 
+    tx_polling_latency_secs = config["network"].get("tx_polling_latency_secs", 13) 
     # Load the WRB contract:
     wrbcontract = wrb(w3, config)
 
