@@ -45,8 +45,9 @@ def handle_requestUpdate(
       except exceptions.TimeExhausted:
         print(f"Transaction for requesting update on {pricefeedcontract.address} is taking too long. Retrying in next iteration.")
 
-    except:
+    except Exception as ex:
       print(f"Failed when trying to update request on {pricefeedcontract.address}. Retrying in next iteration.")
+      print(f"Exception: {ex}")
       return False
 
     # Check if transaction was succesful
@@ -94,8 +95,9 @@ def handle_completeUpdate(
       except exceptions.TimeExhausted:
         print(f"Transaction for completing update on {pricefeedcontract.address} is taking too long. Retrying in next iteration.")
 
-    except:
+    except Exception as ex:
       print(f"Failed when trying to complete update on {pricefeedcontract.address}. Retrying in next iteration.")
+      print(f"Exception: {ex}")
       return False
     
     # Check if transaction was succesful
