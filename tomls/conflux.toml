@@ -9,6 +9,7 @@ pricefeeds = ["0x8B637aBd43B9d7d6714DC03eef0bA410a77eAE98",
 # The ethereum address which will create the transactions
 # (needs to have a high enough balance)
 address = "0x10E824822C6A5C28dE3568DF99604D68e9fd9c8c"
+min_secs_between_request_updates = 900
 
 [network]
 # The provider to which the poller needs to connect

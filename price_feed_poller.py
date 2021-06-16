@@ -55,7 +55,7 @@ def handle_requestUpdate(
     # Check if transaction was succesful
     if receipt['status']: 
       print(
-        f"Data request for contract {pricefeedcontract.address} posted successfully! Ethereum transaction hash:\n{dr_id.hex()}"
+        f"Data request for contract {pricefeedcontract.address} posted successfully!"
       )
     else:
       print(
@@ -108,7 +108,7 @@ def handle_completeUpdate(
     if receipt['status']:
       try:
         price = pricefeedcontract.functions.lastPrice().call()
-        print(f"Completed price update for contract {pricefeedcontract.address}. Latest price is {price}")
+        print(f"Completed price update for contract {pricefeedcontract.address}: latest price is {price}.")
       except:
         # At this point we know the transaction ocurred but we could not get the latest state. Retry later.
         log_exception_state(pricefeedcontract.address)
@@ -134,10 +134,13 @@ def log_loop(
     gas_price,
     loop_interval_secs,
     tx_waiting_timeout_secs,
-    tx_polling_latency_secs
+    tx_polling_latency_secs,
+    min_secs_between_request_updates,
   ):
 
     print("Checking status of contracts...")
+    timestamps = [0] * len(pricefeedcontracts)
+
     while True:
       contracts_information = []
       # Get current Id of the DR
@@ -158,6 +161,7 @@ def log_loop(
 
       # Check the state of the contracts
       for element in contracts_information:
+        index = contracts_information.index(element)
 
         # Check if the result is ready
         if element["status"]:
@@ -180,33 +184,32 @@ def log_loop(
               tx_waiting_timeout_secs,
               tx_polling_latency_secs
             )
-            if success:
-              # Send  a new request
-              handle_requestUpdate(
-                w3,
-                element["feed"],
-                wrbcontract,
-                account,
-                gas,
-                gas_price,
-                tx_waiting_timeout_secs,
-                tx_polling_latency_secs
-              )
+            # if completeUpdate was not successfull, it will be called again in next iteration
           else:
             # Result not ready. Wait for following group
             print("Waiting in contract %s for DR Result #%d" % (element["feed"].address, element["currentId"]))
         else:
-          # Contract waiting for next request to be sent
-          handle_requestUpdate(
-            w3,
-            element["feed"],
-            wrbcontract,
-            account,
-            gas,
-            gas_price,
-            tx_waiting_timeout_secs,
-            tx_polling_latency_secs
-          )
+          # Check ellapsed time since last request to this feed contract:
+          current_ts = int(time.time())
+          ellapsed_secs = current_ts - timestamps[index]
+          if timestamps[index] == 0 or ellapsed_secs >= min_secs_between_request_updates:
+            # Contract waiting for next request to be sent
+            success = handle_requestUpdate(
+              w3,
+              element["feed"],
+              wrbcontract,
+              account,
+              gas,
+              gas_price,
+              tx_waiting_timeout_secs,
+              tx_polling_latency_secs
+            )
+            if success:
+              if timestamps[index] != 0:
+                print("Requested new update on contract %s after %d seconds since the last one."
+                  % (element["feed"].address, ellapsed_secs)
+                )
+              timestamps[index] = current_ts
 
       # Loop
       time.sleep(loop_interval_secs)
@@ -224,6 +227,8 @@ def main(args):
     pricefeedcontracts = pricefeed(w3, config)
     # Get account:
     account = config["account"]["address"]
+    # Get minimum secs between update requests (for each given feed contract):
+    min_secs_between_request_updates = config["account"].get("min_secs_between_request_updates", 15*60)
     # Get gas limit, defaults to 4 million units:
     gas = config["network"].get("gas", 4000000)
     # Get gas price, defaults to 100 gwei:
@@ -255,7 +260,8 @@ def main(args):
       gas_price,
       args.loop_interval_secs,
       tx_waiting_timeout_secs,
-      tx_polling_latency_secs
+      tx_polling_latency_secs,
+      min_secs_between_request_updates
     )
 
 if __name__ == '__main__':
