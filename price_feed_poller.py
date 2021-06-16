@@ -40,10 +40,12 @@ def handle_requestUpdate(
       })
 
       # Get receipt of the transaction   
-      try:
-        receipt = w3.eth.waitForTransactionReceipt(dr_id, tx_waiting_timeout_secs, tx_polling_latency_secs)
-      except exceptions.TimeExhausted:
-        print(f"Transaction for requesting update on {pricefeedcontract.address} is taking too long. Retrying in next iteration.")
+      print(f"Requesting update on {pricefeedcontract.address} (tx: {dr_id.hex()})...")
+      receipt = w3.eth.waitForTransactionReceipt(dr_id, tx_waiting_timeout_secs, tx_polling_latency_secs)
+
+    except exceptions.TimeExhausted:
+      print(f"Transaction for requesting update on {pricefeedcontract.address} is taking too long. Retrying in next iteration.")
+      return False
 
     except Exception as ex:
       print(f"Failed when trying to update request on {pricefeedcontract.address}. Retrying in next iteration.")
@@ -90,10 +92,12 @@ def handle_completeUpdate(
       })
 
       # Get receipt of the transaction
-      try:
-        receipt = w3.eth.waitForTransactionReceipt(read_id, tx_waiting_timeout_secs, tx_polling_latency_secs)
-      except exceptions.TimeExhausted:
-        print(f"Transaction for completing update on {pricefeedcontract.address} is taking too long. Retrying in next iteration.")
+      print(f"Completing update on {pricefeedcontract.address} (tx: {read_id.hex()})...")
+      receipt = w3.eth.waitForTransactionReceipt(read_id, tx_waiting_timeout_secs, tx_polling_latency_secs)
+
+    except exceptions.TimeExhausted:
+      print(f"Transaction for completing update on {pricefeedcontract.address} is taking too long. Retrying in next iteration.")
+      return False
 
     except Exception as ex:
       print(f"Failed when trying to complete update on {pricefeedcontract.address}. Retrying in next iteration.")
