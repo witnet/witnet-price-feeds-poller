@@ -27,6 +27,9 @@ def handle_requestUpdate(
       if balance == 0:
           raise Exception("Account does not have any funds")
 
+      if gas_price is None:
+          gas_price = web3.eth.generate_gas_price()
+
       print(f"Got {balance} wei")
       print(f"Gas price: {gas_price}")
 
@@ -82,8 +85,11 @@ def handle_completeUpdate(
       if balance == 0:
         raise Exception("Account does not have any funds")
 
+      if gas_price is None:
+          gas_price = web3.eth.generate_gas_price()
+
       print(f"Got {balance} wei")
-      print(F"Gas price: {gas_price}")
+      print(f"Gas price: {gas_price}")
 
       read_id = pricefeedcontract.functions.completeUpdate().transact({
         "from": account_addr,
@@ -231,8 +237,8 @@ def main(args):
     min_secs_between_request_updates = config["account"].get("min_secs_between_request_updates", 15*60)
     # Get gas limit, defaults to 4 million units:
     gas = config["network"].get("gas", 4000000)
-    # Get gas price, defaults to 100 gwei:
-    gas_price = config["network"].get("gas_price", 100000000000) 
+    # Get gas price, defaults to "estimate_medium":
+    gas_price = config["network"].get("gas_price", "estimate_medium")
     # Get HTTP-JSON-RPC waiting timeout (in secs):
     tx_waiting_timeout_secs = config["network"].get("tx_waiting_timeout_secs", 130) 
     # Get HTTP-JSON-RPC polling latency timeout (in secs):
@@ -249,6 +255,15 @@ def main(args):
       exit(-1)
 
     print(f"Current block: {current_block}")
+
+    if !isinstance(gas_price, int):
+        if gas_price == "estimate_medium":
+            # Transaction mined within 5 minutes
+            w3.eth.set_gas_price_strategy(web3.gas_strategies.time_based.medium_gas_price_strategy)
+            gas_price = None
+        else:
+            print(f"Invalid gas price: {gas_price}")
+            exit(1)
 
     # Call main loop
     log_loop(
