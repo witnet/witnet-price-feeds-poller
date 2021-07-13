@@ -258,10 +258,16 @@ def main(args):
 
     if not isinstance(gas_price, int):
       if gas_price == "estimate_medium":
+        from web3 import middleware
         from web3.gas_strategies.time_based import medium_gas_price_strategy
 
         # Transaction mined within 5 minutes
         w3.eth.setGasPriceStrategy(medium_gas_price_strategy)
+
+        # Setup cache because get price is slow (it needs 120 blocks)
+        w3.middleware_onion.add(middleware.time_based_cache_middleware)
+        w3.middleware_onion.add(middleware.latest_block_based_cache_middleware)
+        w3.middleware_onion.add(middleware.simple_cache_middleware)
 
         gas_price = None
       else:
