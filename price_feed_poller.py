@@ -28,7 +28,7 @@ def handle_requestUpdate(
           raise Exception("Account does not have any funds")
 
       if gas_price is None:
-          gas_price = web3.eth.generate_gas_price()
+          gas_price = w3.eth.generateGasPrice()
 
       print(f"Got {balance} wei")
       print(f"Gas price: {gas_price}")
@@ -86,7 +86,7 @@ def handle_completeUpdate(
         raise Exception("Account does not have any funds")
 
       if gas_price is None:
-          gas_price = web3.eth.generate_gas_price()
+          gas_price = w3.eth.generateGasPrice()
 
       print(f"Got {balance} wei")
       print(f"Gas price: {gas_price}")
@@ -256,14 +256,17 @@ def main(args):
 
     print(f"Current block: {current_block}")
 
-    if !isinstance(gas_price, int):
-        if gas_price == "estimate_medium":
-            # Transaction mined within 5 minutes
-            w3.eth.set_gas_price_strategy(web3.gas_strategies.time_based.medium_gas_price_strategy)
-            gas_price = None
-        else:
-            print(f"Invalid gas price: {gas_price}")
-            exit(1)
+    if not isinstance(gas_price, int):
+      if gas_price == "estimate_medium":
+        from web3.gas_strategies.time_based import medium_gas_price_strategy
+
+        # Transaction mined within 5 minutes
+        w3.eth.setGasPriceStrategy(medium_gas_price_strategy)
+
+        gas_price = None
+      else:
+        print(f"Invalid gas price: {gas_price}")
+        exit(1)
 
     # Call main loop
     log_loop(
