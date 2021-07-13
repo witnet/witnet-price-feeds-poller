@@ -1,24 +1,25 @@
 [contract]
 # The contracts the poller needs to interact with
-wrb = ""
+wrb = "0xd653fbd7c736838289262F0F41A458f35393C88a"
 
 # Addresses of BtcUsdPriceFeed, EthUsdPriceFeed and GoldEurPriceFeed contracts
 pricefeeds = [
-  "",
-  ""
+  "0xF2712e7114A237625EFC8bBA6a6ed1Bb8b6029c9",
+  "0x1ebD93231a7fE551E1d6405404Df34909eff4c2C"
 ]
 
 [account]
 # The ethereum address which will create the transactions
 # (needs to have a high enough balance)
-address = "0x8d86Bc475bEDCB08179c5e6a4d494EbD3b44Ea8B"
-min_secs_between_request_updates = 3600
+address = ""
+# 24 hours
+min_secs_between_request_updates = 86400
 
 [network]
 # The provider to which the poller needs to connect
 provider = "http://127.0.0.1:9545"
 provider_timeout_secs = 120
-gas_price = 10000000000
-gas = 4000000
+gas_price = "estimate_medium"
+gas = 102496
 tx_waiting_timeout_secs = 200
 tx_polling_latency_secs = 20
