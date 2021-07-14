@@ -26,11 +26,11 @@ def handle_requestUpdate(
 
       if balance == 0:
           raise Exception("Account does not have any funds")
+      print(f"Balance: {balance} wei")
 
       if gas_price is None:
-          gas_price = w3.eth.generateGasPrice()
-
-      print(f"Got {balance} wei")
+        print(f"Estimating gas price from last blocks...")
+        gas_price = w3.eth.generateGasPrice()
       print(f"Gas price: {gas_price}")
 
       reward = wrbcontract.functions.estimateGasCost(gas_price).call()
@@ -84,11 +84,11 @@ def handle_completeUpdate(
       balance = w3.eth.getBalance(account_addr)
       if balance == 0:
         raise Exception("Account does not have any funds")
+      print(f"Balance: {balance} wei")
 
       if gas_price is None:
-          gas_price = w3.eth.generateGasPrice()
-
-      print(f"Got {balance} wei")
+        print(f"Estimating gas price from last blocks...")
+        gas_price = w3.eth.generateGasPrice()
       print(f"Gas price: {gas_price}")
 
       read_id = pricefeedcontract.functions.completeUpdate().transact({
@@ -159,7 +159,7 @@ def log_loop(
             "status" : contract_status,
             "currentId" : currentId
           })
-          print("Latest request Id for contract %s is #%d" % (feed.address, currentId))
+          print("Latest request Id for contract %s is #%d (pending: %s)" % (feed.address, currentId, contract_status))
         except:
           # Error calling the state of the contract. Wait and re-try
           log_exception_state(feed.address, "price feed call")
@@ -295,7 +295,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Connect to an Ethereum provider.')
     parser.add_argument('--config_file', dest='config_file', action='store', required=True,
                     help='provide the config toml file with the contract and provider details')
-    parser.add_argument('--loop_interval_secs', dest='loop_interval_secs', action='store', type=int, required=False, default=15, 
+    parser.add_argument('--loop_interval_secs', dest='loop_interval_secs', action='store', type=int, required=False, default=30, 
                     help='seconds after which the script triggers the state of the smart contract')
     parser.add_argument('--provider', dest='provider', action='store', required=False,
                     help='web3 provider to which the poller should connect. If not provided it reads from config')
