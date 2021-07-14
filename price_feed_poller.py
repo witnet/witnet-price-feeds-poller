@@ -257,7 +257,7 @@ def main(args):
     print(f"Current block: {current_block}")
 
     if not isinstance(gas_price, int):
-      if gas_price == "estimate_medium":
+      if gas_price == "estimate_medium" and w3.eth.chainId == 1:
         from web3 import middleware
         from web3.gas_strategies.time_based import medium_gas_price_strategy
 
@@ -271,7 +271,10 @@ def main(args):
 
         gas_price = None
       else:
-        print(f"Invalid gas price: {gas_price}")
+        if gas_price == "estimate_medium" and w3.eth.chainId != 1:
+          print(f"Invalid gas price: {gas_price}. \"estimate_medium\" can only be used for mainnet (current id: {w3.eth.chainId})")
+        else:
+          print(f"Invalid gas price: {gas_price}. `gas_price` can only be an integer or \"estimate_medium\".")
         exit(1)
 
     # Call main loop
