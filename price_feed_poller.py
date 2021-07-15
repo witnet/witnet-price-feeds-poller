@@ -160,9 +160,9 @@ def log_loop(
             "currentId" : currentId
           })
           print("Latest request Id for contract %s is #%d (pending: %s)" % (feed.address, currentId, contract_status))
-        except:
+        except Exception as ex:
           # Error calling the state of the contract. Wait and re-try
-          log_exception_state(feed.address, "price feed call")
+          log_exception_state(feed.address, f"price feed call: {ex}")
           continue
 
       # Check the state of the contracts
@@ -174,9 +174,9 @@ def log_loop(
 
           try:
             dr_tx_hash = wrbcontract.functions.readDrTxHash(element["currentId"]).call()
-          except: 
+          except Exception as ex:
             # Error calling the state of the contract. Wait and re-try
-            log_exception_state(wrbcontract.address, "wrb call")
+            log_exception_state(wrbcontract.address, f"wrb call: {ex}")
             continue
 
           if dr_tx_hash != 0:
@@ -250,8 +250,8 @@ def main(args):
     try:
       current_block = w3.eth.blockNumber
       print(f"Connected to {provider}")
-    except:
-      print(f"Fatal: connection failed to {provider}")
+    except Exception as ex:
+      print(f"Fatal: connection failed to {provider}: {ex}")
       exit(-1)
 
     print(f"Current block: {current_block}")
