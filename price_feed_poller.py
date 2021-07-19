@@ -21,7 +21,7 @@ def handle_requestUpdate(
   ):
 
     try:
-      # Check that the accout has enough balance
+      # Check that the account has enough balance
       balance = w3.eth.getBalance(account_addr)
 
       if balance == 0:
@@ -42,7 +42,7 @@ def handle_requestUpdate(
         "value": reward
       })
 
-      # Get receipt of the transaction   
+      # Get receipt of the transaction
       print(f"Requesting update on {pricefeedcontract.address} (tx: {dr_id.hex()})...")
       receipt = w3.eth.waitForTransactionReceipt(dr_id, tx_waiting_timeout_secs, tx_polling_latency_secs)
 
@@ -56,14 +56,14 @@ def handle_requestUpdate(
       return False
 
     # Check if transaction was succesful
-    if receipt['status']: 
+    if receipt['status']:
       print(
         f"Data request for contract {pricefeedcontract.address} posted successfully!"
       )
     else:
       print(
         f"Data request for contract {pricefeedcontract.address} post transaction failed. Retrying in next iteration"
-      )  
+      )
     return receipt['status']
 
 def handle_completeUpdate(
@@ -78,7 +78,7 @@ def handle_completeUpdate(
 
     # We got a Read DR request!
     print(f"Got data complete request")
-       
+
     try:
       # Check that the account has enough balance
       balance = w3.eth.getBalance(account_addr)
@@ -109,7 +109,7 @@ def handle_completeUpdate(
       print(f"Failed when trying to complete update on {pricefeedcontract.address}. Retrying in next iteration.")
       print(f"Exception: {ex}")
       return False
-    
+
     # Check if transaction was succesful
     if receipt['status']:
       try:
@@ -122,11 +122,11 @@ def handle_completeUpdate(
     else:
       print(
         f"Read DR result failed. Retrying in next iteration."
-      )  
+      )
     return receipt['status']
 
 def log_exception_state(addr, reason):
-  # log the error and wait 5 seconds before next iteration
+  # log the error and wait 1 second before next iteration
   print(f"Error getting the state of contract {addr}: {reason}. Re-trying in next iterations")
   time.sleep(1)
 
@@ -240,9 +240,9 @@ def main(args):
     # Get gas price, defaults to "estimate_medium":
     gas_price = config["network"].get("gas_price", "estimate_medium")
     # Get HTTP-JSON-RPC waiting timeout (in secs):
-    tx_waiting_timeout_secs = config["network"].get("tx_waiting_timeout_secs", 130) 
+    tx_waiting_timeout_secs = config["network"].get("tx_waiting_timeout_secs", 130)
     # Get HTTP-JSON-RPC polling latency timeout (in secs):
-    tx_polling_latency_secs = config["network"].get("tx_polling_latency_secs", 13) 
+    tx_polling_latency_secs = config["network"].get("tx_polling_latency_secs", 13)
     # Load the WRB contract:
     wrbcontract = wrb(w3, config)
 
@@ -295,7 +295,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Connect to an Ethereum provider.')
     parser.add_argument('--config_file', dest='config_file', action='store', required=True,
                     help='provide the config toml file with the contract and provider details')
-    parser.add_argument('--loop_interval_secs', dest='loop_interval_secs', action='store', type=int, required=False, default=30, 
+    parser.add_argument('--loop_interval_secs', dest='loop_interval_secs', action='store', type=int, required=False, default=30,
                     help='seconds after which the script triggers the state of the smart contract')
     parser.add_argument('--provider', dest='provider', action='store', required=False,
                     help='web3 provider to which the poller should connect. If not provided it reads from config')
