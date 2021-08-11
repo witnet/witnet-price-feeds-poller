@@ -35,6 +35,7 @@ def handle_requestUpdate(
       print(f"Gas price: {gas_price}")
 
       reward = wrbcontract.functions.estimateGasCost(gas_price).call()
+      print(f"Reward: {reward}")
 
       dr_id = pricefeedcontract.functions.requestUpdate().transact({
         "from": account_addr,

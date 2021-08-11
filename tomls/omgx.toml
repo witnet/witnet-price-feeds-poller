@@ -1,24 +1,24 @@
 [contract]
 # The WRB entry point which the poller needs to interact with
-wrb = "0x80786fD4878c98EC22559942e533223CaA8B003F"
+wrb = "0x9AEC8fDABa5AC2add0C6be7d833D05ed35240A3c"
 
 # Addresses of BtcUsdPriceFeed and EthUsdPriceFeed contracts
 pricefeeds = [
-  "0x83803e703fb38d8682b53C698B7330dfd262E949", 
-  "0x8aE319e40dE6Cbb2226d4C449375d429d6782739",
+  "0xFc2d03FC7983690e59b19742Df95921f6f427619",
+  "0xc892156C21Fc754B1786872313e2dd34DbA779DF"
 ]
 
 [account]
 # The address of the EOA that will create the transactions
 # (needs to have a high enough balance)
-address = "0x10E824822C6A5C28dE3568DF99604D68e9fd9c8c"
+address = "0x8d86Bc475bEDCB08179c5e6a4d494EbD3b44Ea8B"
 min_secs_between_request_updates = 300
 
 [network]
 # The provider to which the poller needs to connect
-provider = "http://127.0.0.1:3000"
+provider = "http://127.0.0.1:8539"
 provider_timeout_secs = 120
-gas_price = 1
-gas = 200000
+gas_price = 15000000
+gas = 8000000
 tx_waiting_timeout_secs = 60
 tx_polling_latency_secs = 2

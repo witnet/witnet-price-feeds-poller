@@ -1,5 +1,5 @@
 [contract]
-# The contracts the poller needs to interact with
+# The WRB entry point which the poller needs to interact with
 wrb = "0x0C4be6AA667df48de54BA174bE7948875fdf152B"
 
 # Addresses of BtcUsdPriceFeed, EthUsdPriceFeed and GoldEurPriceFeed contracts
@@ -9,7 +9,7 @@ pricefeeds = [
 ]
 
 [account]
-# The ethereum address which will create the transactions
+# The address of the EOA that will create the transactions
 # (needs to have a high enough balance)
 address = "0x8d86Bc475bEDCB08179c5e6a4d494EbD3b44Ea8B"
 min_secs_between_request_updates = 3600
