@@ -34,7 +34,7 @@ def handle_requestUpdate(
         gas_price = w3.eth.generateGasPrice()
       print(f"Gas price: {gas_price}")
 
-      reward = wrbcontract.functions.estimateGasCost(gas_price).call()
+      reward = wrbcontract.functions.estimateReward(gas_price).call()
       print(f"Reward: {reward}")
 
       dr_id = pricefeedcontract.functions.requestUpdate().transact({
@@ -135,7 +135,6 @@ def log_exception_state(addr, reason):
 
 def log_loop(
     w3,
-    wrbcontract,
     pricefeedcontracts,
     account,
     gas,
@@ -154,16 +153,16 @@ def log_loop(
       # Get current Id of the DR
       for feed in pricefeedcontracts:
         try:
-          currentId = feed.functions.lastRequestId().call()
+          currentId = feed.functions.requestId().call()
           contract_status = feed.functions.pending().call()
           # TODO: Use ethereum timestamps is not a recommended practice
           # In the future we could use Witnet block number or a database file
-          lastTimestamp = feed.functions.timestamp().call()
+          lastResponseItems = feed.functions.lastResponse().call()
           contracts_information.append({
             "feed" : feed,
             "status" : contract_status,
             "currentId" : currentId,
-            "lastTimestamp" : lastTimestamp
+            "lastTimestamp" : lastResponseItems[1]
           })
           print("Latest request Id for contract %s is #%d (pending: %s)" % (feed.address, currentId, contract_status))
         except Exception as ex:
@@ -174,19 +173,20 @@ def log_loop(
       # Check the state of the contracts
       for element in contracts_information:
         index = contracts_information.index(element)
+        wrbcontract = wrb(w3, feed.functions.witnet().call())
 
         # Check if the result is ready
-        if element["status"]:
+        if element["status"]:          
+          try:            
+            queryStatus = wrbcontract.functions.getQueryStatus(element["currentId"]).call()            
 
-          try:
-            dr_tx_hash = wrbcontract.functions.readDrTxHash(element["currentId"]).call()
           except Exception as ex:
             # Error calling the state of the contract. Wait and re-try
-            log_exception_state(wrbcontract.address, f"wrb call: {ex}")
+            log_exception_state(wrb.address, f"wrb call: {ex}")
             continue
 
-          if dr_tx_hash != 0:
-            # Read the result
+          if queryStatus == 2: 
+            # The query has been resolved, so complete the update:
             success = handle_completeUpdate(
               w3,
               element["feed"],
@@ -200,12 +200,14 @@ def log_loop(
           else:
             # Result not ready. Wait for following group
             print("Waiting in contract %s for DR Result #%d" % (element["feed"].address, element["currentId"]))
+
         else:
           if timestamps[index] == 0:
             last_ts = element["lastTimestamp"]
             readable_ts = datetime.datetime.fromtimestamp(last_ts)
             print(f"Price feed from contract {element['feed'].address} last updated at {readable_ts.strftime('%Y-%m-%d %H:%M:%S')}")
             timestamps[index] = last_ts
+
           # Check elapsed time since last request to this feed contract:
           current_ts = int(time.time())
           elapsed_secs = current_ts - timestamps[index]
@@ -254,8 +256,6 @@ def main(args):
     tx_waiting_timeout_secs = config["network"].get("tx_waiting_timeout_secs", 130)
     # Get HTTP-JSON-RPC polling latency timeout (in secs):
     tx_polling_latency_secs = config["network"].get("tx_polling_latency_secs", 13)
-    # Load the WRB contract:
-    wrbcontract = wrb(w3, config)
 
     # Try connecting to JSON-RPC provider and get latest block:
     try:
@@ -291,7 +291,6 @@ def main(args):
     # Call main loop
     log_loop(
       w3,
-      wrbcontract,
       pricefeedcontracts,
       account,
       gas,

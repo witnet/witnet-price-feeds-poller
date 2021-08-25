@@ -1,11 +1,8 @@
-[contract]
-# The WRB entry point which the poller needs to interact with
-wrb = "0x9AEC8fDABa5AC2add0C6be7d833D05ed35240A3c"
-
-# Addresses of BtcUsdPriceFeed and EthUsdPriceFeed contracts
+[contracts]
+# ERC2362PriceFeed contracts
 pricefeeds = [
-  "0xFc2d03FC7983690e59b19742Df95921f6f427619",
-  "0xc892156C21Fc754B1786872313e2dd34DbA779DF"
+  "0xa6ADEB16Cc5aB0d6A79957D9cf6234F508c33A74", # BtcUsdPriceFeed 
+  "0x542e8aD2e1AA508CC254E536DA98291776A15c65"  # EthUsdPriceFeed
 ]
 
 [account]
