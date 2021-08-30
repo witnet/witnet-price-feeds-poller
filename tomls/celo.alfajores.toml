@@ -1,0 +1,21 @@
+[contracts]
+# ERC2362PriceFeed contracts
+pricefeeds = [
+  "0xC9EF681EB5c620F750849806482d03983DDb76c2", # BtcUsdPriceFeed 
+  "0xfa9CaFbeB1e846C9A470c749f288591FEa6B0295"  # EthUsdPriceFeed
+]
+
+[account]
+# The address of the EOA that will create the transactions
+# (needs to have a high enough balance)
+address = "0xA0E824822C6A5C28DE3568Df99604d68E9FD9C8c"
+min_secs_between_request_updates = 300
+
+[network]
+# The provider to which the poller needs to connect
+provider = "http://127.0.0.1:8538"
+provider_timeout_secs = 120
+gas_price = 500000000
+gas = 8000000
+tx_waiting_timeout_secs = 60
+tx_polling_latency_secs = 2
