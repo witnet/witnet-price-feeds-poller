@@ -173,16 +173,21 @@ def log_loop(
       # Check the state of the contracts
       for element in contracts_information:
         index = contracts_information.index(element)
-        wrbcontract = wrb(w3, feed.functions.witnet().call())
+        try:
+          wrbcontract = wrb(w3, feed.functions.witnet().call())
+        except Exception as ex:
+          # Error when getting the entrypoint to the Witnet Request Board from the pricefeed
+          log_exception_state(feed.address, f"witnet() call: {ex}")
+          continue
 
         # Check if the result is ready
         if element["status"]:          
           try:            
-            queryStatus = wrbcontract.functions.getQueryStatus(element["currentId"]).call()            
+            queryStatus = wrbcontract.functions.getQueryStatus(element["currentId"]).call()
 
           except Exception as ex:
             # Error calling the state of the contract. Wait and re-try
-            log_exception_state(wrb.address, f"wrb call: {ex}")
+            log_exception_state(wrbcontract.address, f"getQueryStatus({element['currentId']}) call: {ex}")
             continue
 
           if queryStatus == 2: 
