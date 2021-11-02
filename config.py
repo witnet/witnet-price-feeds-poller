@@ -8,7 +8,7 @@ def load_config(filename):
   config = toml.load(filename)
   # Check the necessary fields are provided in the toml
   if  config.get('contracts') is None or config['contracts'].get('pricefeeds') is None:
-    raise TomlError("Please specify ERC2362PriceFeed addresses as \n[contracts]\npricefeed=[\"0xaaaa\", ...]\n")
+    raise TomlError("Please specify ERC2362PriceFeed addresses as \n[contracts]\npricefeeds=[\"0xaaaa\", ...]\n")
   elif  config.get('account') is None or config['account'].get('address') is None:
     raise TomlError("Please specify account as \n[account]\naddress=0xaaaa")
   elif  config.get('network') is None or config['network'].get('provider') is None:
