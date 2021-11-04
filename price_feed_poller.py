@@ -132,6 +132,26 @@ def log_exception_state(addr, reason):
   print(f"Error getting the state of contract {addr}: {reason}. Re-trying in next iterations")
   time.sleep(1)
 
+@contextlib.contextmanager
+def stdoutIO(stdout=None):
+  old = sys.stdout
+  if stdout is None:
+    stdout = StringIO()
+  sys.stdout = stdout
+  yield stdout
+  sys.stdout = old
+
+def dry_run_request(bytecode):
+  cmdline = "npx witnet-toolkit try-data-request --hex "
+  cmdline += bytecode.hex()
+  cmdline += " | tail -n 2 | head -n 1 | awk -F: '{ print $2 }' | sed 's/ //g' | tr -d \"│\""
+  # print(cmdline)
+  process = subprocess.Popen(cmdline, stdout=subprocess.PIPE, shell=True)
+  process.wait()
+  output, error = process.communicate()
+  if error is not None:
+    raise Exception(error)
+  return int(output)
 
 def log_loop(
     w3,
@@ -156,6 +176,7 @@ def log_loop(
         try:
           currentId = feed.functions.requestId().call()
           contract_status = feed.functions.pending().call()
+          lastPrice = feed.functions.lastPrice().call()
           # TODO: Use ethereum timestamps is not a recommended practice
           # In the future we could use Witnet block number or a database file
           lastResponseItems = feed.functions.lastResponse().call()
@@ -163,6 +184,7 @@ def log_loop(
             "feed" : feed,
             "status" : contract_status,
             "currentId" : currentId,
+            "lastPrice": lastPrice,
             "lastTimestamp" : lastResponseItems[1]
           })
           print("Latest request Id for contract %s is #%d (pending: %s)" % (feed.address, currentId, contract_status))
@@ -211,13 +233,24 @@ def log_loop(
           if timestamps[index] == 0:
             last_ts = element["lastTimestamp"]
             readable_ts = datetime.datetime.fromtimestamp(last_ts)
-            print(f"Price feed from contract {element['feed'].address} last updated at {readable_ts.strftime('%Y-%m-%d %H:%M:%S')}")
+            print(f"Price value from contract {element['feed'].address} last updated at {readable_ts.strftime('%Y-%m-%d %H:%M:%S')}")
             timestamps[index] = last_ts
 
           # Check elapsed time since last request to this feed contract:
           current_ts = int(time.time())
           elapsed_secs = current_ts - timestamps[index]
           if timestamps[index] == 0 or elapsed_secs >= min_secs_between_request_updates:
+            last_price = element["lastPrice"]
+            if last_price > 0 and len(thresholds) > 0:
+              # If threshold is configured, evaluate actual price deviation  
+              next_price = dry_run_request(element['feed'].functions.bytecode().call())
+              deviation = round(100 * ((next_price - last_price) / last_price), 2)
+              if abs(deviation) < thresholds[index]:
+                # If deviation is below threshold, skip request update until another `min_secs_between_request_updates` secs
+                print(f"Price deviation from contract {element['feed'].address} is below threshold ({abs(deviation)}% < {thresholds[index]}%)")
+                continue
+              else:
+                print(f"Next price integer value from contract {element['feed'].address} would rather be {next_price} instead of {last_price}.")
             # Contract waiting for next request to be sent
             success = handle_requestUpdate(
               w3,
