@@ -140,6 +140,7 @@ cython_debug/
 # Others
 node_modules/
 yarn.lock
+package-lock.json
 
 # CSV files
 *.csv
