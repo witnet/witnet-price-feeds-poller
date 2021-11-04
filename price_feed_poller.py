@@ -262,12 +262,13 @@ def log_loop(
           if timestamps[index] == 0 or elapsed_secs >= min_secs_between_request_updates:
             last_price = element["lastPrice"]
             if last_price > 0 and len(thresholds) > 0:
-              # If threshold is configured, evaluate actual price deviation  
+              # If thresholds is configured, evaluate actual price deviation  
               next_price = dry_run_request(element['feed'].functions.bytecode().call())
               deviation = round(100 * ((next_price - last_price) / last_price), 2)
               if abs(deviation) < thresholds[index] and elapsed_secs < max_secs_between_request_updates:
                 # If deviation is below threshold, skip request update until another `min_secs_between_request_updates` secs
                 print(f"Price deviation from contract {element['feed'].address} is below threshold ({abs(deviation)}% < {thresholds[index]}%)")
+                timestamps[index] = current_ts
                 continue
               else:
                 print(f"Next price integer value from contract {element['feed'].address} would rather be {next_price} instead of {last_price}.")
