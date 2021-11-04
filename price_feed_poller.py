@@ -164,6 +164,7 @@ def log_loop(
     tx_waiting_timeout_secs,
     tx_polling_latency_secs,
     min_secs_between_request_updates,
+    max_secs_between_request_updates,
   ):
 
     print("Checking status of contracts...")
@@ -245,7 +246,7 @@ def log_loop(
               # If threshold is configured, evaluate actual price deviation  
               next_price = dry_run_request(element['feed'].functions.bytecode().call())
               deviation = round(100 * ((next_price - last_price) / last_price), 2)
-              if abs(deviation) < thresholds[index]:
+              if abs(deviation) < thresholds[index] and elapsed_secs < max_secs_between_request_updates:
                 # If deviation is below threshold, skip request update until another `min_secs_between_request_updates` secs
                 print(f"Price deviation from contract {element['feed'].address} is below threshold ({abs(deviation)}% < {thresholds[index]}%)")
                 continue
@@ -291,7 +292,9 @@ def main(args):
     # Get account:
     account = config["account"]["address"]
     # Get minimum secs between update requests (for each given feed contract):
-    min_secs_between_request_updates = config["account"].get("min_secs_between_request_updates", 15*60)
+    min_secs_between_request_updates = config["account"].get("min_secs_between_request_updates", 300)
+    # Get maximum secs between update requests (for each given feed contract):
+    max_secs_between_request_updates = config["account"].get("max_secs_between_request_updates", 3600)
     # Get gas limit, defaults to 4 million units:
     gas = config["network"].get("gas", 4000000)
     # Get gas price, defaults to "estimate_medium":
@@ -343,7 +346,8 @@ def main(args):
       args.loop_interval_secs,
       tx_waiting_timeout_secs,
       tx_polling_latency_secs,
-      min_secs_between_request_updates
+      min_secs_between_request_updates,
+      max_secs_between_request_updates,
     )
 
 if __name__ == '__main__':
