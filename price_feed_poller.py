@@ -1,14 +1,18 @@
 #!/usr/bin/env python3
 import argparse
+import contextlib
+import datetime
+import io
 import json
 import os
 import socket
+import subprocess
 import sys
 import time
-import datetime
-from web3 import Web3, exceptions
-from contract import pricefeed, wrb
+
 from config import load_config
+from contract import pf_contracts, pf_thresholds, wrb
+from web3 import Web3, exceptions
 
 # Post a data request to the post_dr method of the WRB contract
 def handle_requestUpdate(
