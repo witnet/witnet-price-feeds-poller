@@ -135,7 +135,8 @@ def log_exception_state(addr, reason):
 
 def log_loop(
     w3,
-    pricefeedcontracts,
+    pricefeeds,
+    thresholds,
     account,
     gas,
     gas_price,
@@ -146,12 +147,12 @@ def log_loop(
   ):
 
     print("Checking status of contracts...")
-    timestamps = [0] * len(pricefeedcontracts)
+    timestamps = [0] * len(pricefeeds)
 
     while True:
       contracts_information = []
       # Get current Id of the DR
-      for feed in pricefeedcontracts:
+      for feed in pricefeeds:
         try:
           currentId = feed.functions.requestId().call()
           contract_status = feed.functions.pending().call()
@@ -247,8 +248,13 @@ def main(args):
     provider_timeout_secs = config['network'].get("provider_timeout_secs", 60)
     # Open web3 provider from the arguments provided:
     w3 = Web3(Web3.HTTPProvider(provider, request_kwargs={'timeout': provider_timeout_secs}))
-    # Load the pricefeed contract:
-    pricefeedcontracts = pricefeed(w3, config)
+    # Load configured pricefeed contracts:
+    pricefeeds = pf_contracts(w3, config)
+    # Load configured pricefeed thresholds if any
+    thresholds = pf_thresholds(config)
+    if len(thresholds) > 0:
+      assert(len(thresholds) == len(pricefeeds))
+      print("Deviation thresholds:", thresholds)
     # Get account:
     account = config["account"]["address"]
     # Get minimum secs between update requests (for each given feed contract):
@@ -296,7 +302,8 @@ def main(args):
     # Call main loop
     log_loop(
       w3,
-      pricefeedcontracts,
+      pricefeeds,
+      thresholds,
       account,
       gas,
       gas_price,
