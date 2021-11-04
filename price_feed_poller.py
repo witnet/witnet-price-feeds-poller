@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import json
+import os
 import socket
 import sys
 import time
@@ -18,7 +19,8 @@ def handle_requestUpdate(
     gas,
     gas_price,
     tx_waiting_timeout_secs,
-    tx_polling_latency_secs
+    tx_polling_latency_secs,
+    csv_filename
   ):
 
     try:
@@ -43,6 +45,7 @@ def handle_requestUpdate(
         "gasPrice": gas_price,
         "value": reward
       })
+      log_master_balance(csv_filename, account_addr, balance, dr_id.hex())
 
       # Get receipt of the transaction
       print(f"Requesting update on {pricefeedcontract.address} (tx: {dr_id.hex()})...")
@@ -75,7 +78,8 @@ def handle_completeUpdate(
     gas,
     gas_price,
     tx_waiting_timeout_secs,
-    tx_polling_latency_secs
+    tx_polling_latency_secs,
+    csv_filename
   ):
 
     # We got a Read DR request!
@@ -98,7 +102,8 @@ def handle_completeUpdate(
         "gas": gas,
         "gasPrice": gas_price
       })
-
+      log_master_balance(csv_filename, account_addr, balance, read_id.hex())
+      
       # Get receipt of the transaction
       print(f"Completing update on {pricefeedcontract.address} (tx: {read_id.hex()})...")
       receipt = w3.eth.waitForTransactionReceipt(read_id, tx_waiting_timeout_secs, tx_polling_latency_secs)
@@ -126,6 +131,13 @@ def handle_completeUpdate(
         f"Read DR result failed. Retrying in next iteration."
       )
     return receipt['status']
+
+def log_master_balance(csv_filename, addr, balance, txhash):
+  if csv_filename is not None:
+    with open(csv_filename, "a", encoding="utf-8") as csv_file:
+      row = f"\"{os.path.splitext(csv_filename)[0]}\";\"{addr}\";\"{int(time.time())}\";\"{balance}\";\"{txhash}\""
+      # print(row)
+      csv_file.write(row + '\n')
 
 def log_exception_state(addr, reason):
   # log the error and wait 1 second before next iteration
@@ -165,6 +177,7 @@ def log_loop(
     tx_polling_latency_secs,
     min_secs_between_request_updates,
     max_secs_between_request_updates,
+    csv_filename
   ):
 
     print("Checking status of contracts...")
@@ -223,7 +236,8 @@ def log_loop(
               gas,
               gas_price,
               tx_waiting_timeout_secs,
-              tx_polling_latency_secs
+              tx_polling_latency_secs,
+              csv_filename
             )
             # if completeUpdate was not successfull, it will be called again in next iteration
           else:
@@ -261,7 +275,8 @@ def log_loop(
               gas,
               gas_price,
               tx_waiting_timeout_secs,
-              tx_polling_latency_secs
+              tx_polling_latency_secs,
+              csv_filename
             )
             if success:
               if timestamps[index] != 0:
@@ -348,6 +363,7 @@ def main(args):
       tx_polling_latency_secs,
       min_secs_between_request_updates,
       max_secs_between_request_updates,
+      args.csv_file
     )
 
 if __name__ == '__main__':
@@ -358,6 +374,8 @@ if __name__ == '__main__':
                     help='seconds after which the script triggers the state of the smart contract')
     parser.add_argument('--provider', dest='provider', action='store', required=False,
                     help='web3 provider to which the poller should connect. If not provided it reads from config')
+    parser.add_argument('--csv_file', dest='csv_file', action='store', required=False, default="",
+                    help='provide the CSV file in which master address balance will be logged after sending every new transaction')
 
     args = parser.parse_args()
     main(args)
