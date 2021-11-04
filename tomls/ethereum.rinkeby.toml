@@ -1,15 +1,20 @@
-[contracts]
+[pricefeeds]
 # ERC2362PriceFeed contracts
-pricefeeds = [
-  "0xa7C971149AdfdFB237A0F78D7d317B916FFCE093", # BtcUsdPriceFeed 
-  "0x1320C130Fc5361ced969Ca737d692a30e1142a13"  # EthUsdPriceFeed
+addresses = [
+  "0xccAe308C9b91a3e3De8E0Dd4136Ce0Bb608e6ea4", # BtcUsdPriceFeed 
+  "0x4566CaD4e76575f85fA423EF46080Afe353f7A05"  # EthUsdPriceFeed
+]
+thresholds = [
+  2.0, # BtcUsdPriceFeed
+  2.0  # EthUsdPriceFeed
 ]
 
 [account]
 # The address of the EOA that will create the transactions
 # (needs to have a high enough balance)
 address = "0x8d86Bc475bEDCB08179c5e6a4d494EbD3b44Ea8B"
-min_secs_between_request_updates = 3600
+min_secs_between_request_updates = 300
+max_secs_between_request_updates = 3600
 
 [network]
 # The provider to which the poller needs to connect

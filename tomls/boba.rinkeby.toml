@@ -1,8 +1,18 @@
-[contracts]
+[pricefeeds]
 # ERC2362PriceFeed contracts
-pricefeeds = [
-  "0xa6ADEB16Cc5aB0d6A79957D9cf6234F508c33A74", # BtcUsdPriceFeed 
-  "0x542e8aD2e1AA508CC254E536DA98291776A15c65"  # EthUsdPriceFeed
+addresses = [
+  "0xeD074DA2A76FD2Ca90C1508930b4FB4420e413B0", # BtcUsdPriceFeed 
+  "0xD9465D38f50f364b3263Cb219e58d4dB2D584530", # EthUsdPriceFeed
+  "0x56834Ff8D4b27db647Da97CA3bd8540f7fA0e89D", # OmgBtcPriceFeed
+  "0x225BAd150B9D5202DC805B34A0DF64B1a77459dF", # OmgEthPriceFeed
+  "0xE2Efa3fe66352e63F118bB9165435C5BEDB777d0"  # OmgUsdtPriceFeed
+]
+thresholds = [
+  2.0, # BtcUsdPriceFeed
+  2.0, # EthUsdPriceFeed
+  2.0, # OmgBtcPriceFeed
+  2.0, # OmgEthPriceFeed
+  2.0  # OmgUsdtPriceFeed
 ]
 
 [account]
@@ -10,6 +20,7 @@ pricefeeds = [
 # (needs to have a high enough balance)
 address = "0x8d86Bc475bEDCB08179c5e6a4d494EbD3b44Ea8B"
 min_secs_between_request_updates = 300
+max_secs_between_request_updates = 3600
 
 [network]
 # The provider to which the poller needs to connect

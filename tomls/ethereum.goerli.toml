@@ -5,20 +5,20 @@ addresses = [
   "0x7D72Bd8F6c9D06Ae6D3Fd4B1aE0CAdab732959a7"  # EthUsdPriceFeed
 ]
 thresholds = [
-  0.1, # BtcUsdPriceFeed
-  0.1  # EthUsdPriceFeed
+  2.0, # BtcUsdPriceFeed
+  2.0  # EthUsdPriceFeed
 ]
 
 [account]
 # The address of the EOA that will create the transactions
 # (needs to have a high enough balance)
 address = "0x8d86Bc475bEDCB08179c5e6a4d494EbD3b44Ea8B"
-min_secs_between_request_updates = 60
-max_secs_between_request_updates = 360
+min_secs_between_request_updates = 300
+max_secs_between_request_updates = 3600
 
 [network]
 # The provider to which the poller needs to connect
-provider = "http://127.0.0.1:8545"
+provider = "http://localhost:8545"
 provider_timeout_secs = 120
 gas_price = 10000000000
 gas = 250000
