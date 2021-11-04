@@ -1,8 +1,12 @@
-[contracts]
+[pricefeeds]
 # ERC2362PriceFeed contracts
-pricefeeds = [
-  "0x43Fe8778389f4EB98e82B750DCCAfF0D7d57778c", # BtcUsdPriceFeed 
-  "0x031699240f710B47e92Df7766C06ee6C22A75df1"  # EthUsdPriceFeed
+addresses = [
+  "0xcd445329A50EB30e82F349A89D583B2Cb516F18f", # BtcUsdPriceFeed 
+  "0x7D72Bd8F6c9D06Ae6D3Fd4B1aE0CAdab732959a7"  # EthUsdPriceFeed
+]
+thresholds = [
+  0.1, # BtcUsdPriceFeed
+  0.1  # EthUsdPriceFeed
 ]
 
 [account]
