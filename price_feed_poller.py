@@ -30,17 +30,12 @@ def handle_requestUpdate(
 
       if balance == 0:
           raise Exception("Account does not have any funds")
-      print(f"Balance: {round(balance / 10 ** 18, 5)} ETH")
 
       if gas_price is None:
         print(f"Estimating gas price from last blocks...")
         gas_price = w3.eth.generateGasPrice()
-      print("Gas price:", "{:,}".format(gas_price))
-      print("Gas:", "{:,}".format(gas))
 
       reward = wrbcontract.functions.estimateReward(gas_price).call()
-      print(f"Reward: {round(reward / 10 ** 18, 5)} ETH")
-
       dr_id = pricefeedcontract.functions.requestUpdate().transact({
         "from": account_addr,
         "gas": gas,
@@ -143,10 +138,12 @@ def handle_completeUpdate(
 
 def log_master_balance(csv_filename, addr, balance, txhash):
   if csv_filename is not None:
-    with open(csv_filename, "a", encoding="utf-8") as csv_file:
-      row = f"\"{os.path.splitext(csv_filename)[0]}\";\"{addr}\";\"{int(time.time())}\";\"{balance}\";\"{txhash}\""
-      # print(row)
-      csv_file.write(row + '\n')
+    try:
+      with open(csv_filename, "a", encoding="utf-8") as csv_file:
+        row = f"\"{os.path.splitext(csv_filename)[0]}\";\"{addr}\";\"{int(time.time())}\";\"{balance}\";\"{txhash}\""
+        csv_file.write(row + '\n')
+    except:
+      return
 
 def log_exception_state(addr, reason):
   # log the error and wait 1 second before next iteration
@@ -166,7 +163,6 @@ def dry_run_request(bytecode):
   cmdline = "npx witnet-toolkit try-data-request --hex "
   cmdline += bytecode.hex()
   cmdline += " | tail -n 2 | head -n 1 | awk -F: '{ print $2 }' | sed 's/ //g' | tr -d \"│\""
-  # print(cmdline)
   process = subprocess.Popen(cmdline, stdout=subprocess.PIPE, shell=True)
   process.wait()
   output, error = process.communicate()
