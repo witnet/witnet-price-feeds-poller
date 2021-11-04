@@ -140,7 +140,7 @@ def log_master_balance(csv_filename, addr, balance, txhash):
   if csv_filename is not None:
     try:
       with open(csv_filename, "a", encoding="utf-8") as csv_file:
-        row = f"\"{os.path.splitext(csv_filename)[0]}\";\"{addr}\";\"{int(time.time())}\";\"{balance}\";\"{txhash}\""
+        row = f"\"{os.path.splitext(os.path.basename(csv_filename))[0]}\";\"{addr}\";\"{int(time.time())}\";\"{balance}\";\"{txhash}\""
         csv_file.write(row + '\n')
     except:
       return
