@@ -268,7 +268,6 @@ def log_loop(
               if abs(deviation) < thresholds[index] and elapsed_secs < max_secs_between_request_updates:
                 # If deviation is below threshold, skip request update until another `min_secs_between_request_updates` secs
                 print(f"Price deviation from contract {element['feed'].address} is below threshold ({abs(deviation)}% < {thresholds[index]}%)")
-                timestamps[index] = current_ts
                 continue
               else:
                 print(f"Next price integer value from contract {element['feed'].address} would rather be {next_price} instead of {last_price}.")
