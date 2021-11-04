@@ -51,8 +51,12 @@ def handle_requestUpdate(
 
       # Get receipt of the transaction
       print(f"Requesting update on {pricefeedcontract.address} (tx: {dr_id.hex()})...")
+      print(f"> Balance: {round(balance / 10 ** 18, 5)} ETH")
+      print("> Gas price:", "{:,}".format(gas_price))
+      print("> Gas:", "{:,}".format(gas))
+      print(f"> Reward: {round(reward / 10 ** 18, 5)} ETH")
       receipt = w3.eth.waitForTransactionReceipt(dr_id, tx_waiting_timeout_secs, tx_polling_latency_secs)
-      print("Total cost:", round((balance - w3.eth.getBalance(account_addr)) / 10 ** 18, 5), "ETH")
+      print("> > Total cost:", round((balance - w3.eth.getBalance(account_addr)) / 10 ** 18, 5), "ETH")
 
     except exceptions.TimeExhausted:
       print(f"Transaction for requesting update on {pricefeedcontract.address} is taking too long. Retrying in next iteration.")
@@ -93,15 +97,10 @@ def handle_completeUpdate(
       balance = w3.eth.getBalance(account_addr)
       if balance == 0:
         raise Exception("Account does not have any funds")
-      
-      print(f"Balance: {round(balance / 10 ** 18, 5)} ETH")
 
       if gas_price is None:
         print(f"Estimating gas price from last blocks...")
         gas_price = w3.eth.generateGasPrice()
-      
-      print("Gas price:", "{:,}".format(gas_price))
-      print("Gas:", "{:,}".format(gas))
 
       read_id = pricefeedcontract.functions.completeUpdate().transact({
         "from": account_addr,
@@ -112,8 +111,11 @@ def handle_completeUpdate(
       
       # Get receipt of the transaction
       print(f"Completing update on {pricefeedcontract.address} (tx: {read_id.hex()})...")
+      print(f"> Balance: {round(balance / 10 ** 18, 5)} ETH")
+      print("> Gas price:", "{:,}".format(gas_price))
+      print("> Gas:", "{:,}".format(gas))
       receipt = w3.eth.waitForTransactionReceipt(read_id, tx_waiting_timeout_secs, tx_polling_latency_secs)
-      print("Total cost:", round((balance - w3.eth.getBalance(account_addr)) / 10 ** 18, 5), "ETH")
+      print("> > Total cost:", round((balance - w3.eth.getBalance(account_addr)) / 10 ** 18, 5), "ETH")
 
     except exceptions.TimeExhausted:
       print(f"Transaction for completing update on {pricefeedcontract.address} is taking too long. Retrying in next iteration.")
