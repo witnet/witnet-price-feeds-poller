@@ -1,23 +1,20 @@
 [pricefeeds]
-# ERC2362PriceFeed contracts
-addresses = [
-  "0xcd445329A50EB30e82F349A89D583B2Cb516F18f", # BtcUsdPriceFeed 
-  "0x7D72Bd8F6c9D06Ae6D3Fd4B1aE0CAdab732959a7"  # EthUsdPriceFeed
-]
-thresholds = [
-  2.0, # BtcUsdPriceFeed
-  2.0  # EthUsdPriceFeed
-]
+
+  [pricefeeds.BtcUsdPriceFeed]
+  contract_address = "0xcd445329A50EB30e82F349A89D583B2Cb516F18f"
+  deviation_threshold_percentage = 2.0
+
+  [pricefeeds.EthUsdPriceFeed]
+  contract_address = "0x7D72Bd8F6c9D06Ae6D3Fd4B1aE0CAdab732959a7"
+  deviation_threshold_percentage = 2.0
 
 [account]
-# The address of the EOA that will create the transactions
-# (needs to have a high enough balance)
+# The address of the EOA that will be signing transactions
 address = "0x8d86Bc475bEDCB08179c5e6a4d494EbD3b44Ea8B"
 min_secs_between_request_updates = 300
 max_secs_between_request_updates = 3600
 
 [network]
-# The provider to which the poller needs to connect
 provider = "http://localhost:8545"
 provider_timeout_secs = 120
 gas_price = 10000000000

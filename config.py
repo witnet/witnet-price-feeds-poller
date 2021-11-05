@@ -5,10 +5,10 @@ class TomlError(Exception):
 
 # Read configuration file
 def load_config(filename):
-  config = toml.load(filename)
+  config = toml.load(filename)  
   # Check the necessary fields are provided in the toml
-  if  config.get('pricefeeds') is None or config['pricefeeds'].get('addresses') is None:
-    raise TomlError("Please specify ERC2362PriceFeed addresses as \n[pricefeeds]\naddresses=[\"0xaaaa\", ...]\n")
+  if  config.get('pricefeeds') is None or len(config['pricefeeds']) == 0:
+    raise TomlError("Please specify at least one pricefeed underneath [pricefeeds] as\n[pricefeeds]\n  [pricefeeds.giveitananme]\n  contract_address = \"0x...\"\n  deviation_threshold_percentage = 1.5\n")
   elif  config.get('account') is None or config['account'].get('address') is None:
     raise TomlError("Please specify account as \n[account]\naddress=0xaaaa")
   elif  config.get('network') is None or config['network'].get('provider') is None:

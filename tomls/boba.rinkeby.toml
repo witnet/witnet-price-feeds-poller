@@ -1,19 +1,24 @@
 [pricefeeds]
-# ERC2362PriceFeed contracts
-addresses = [
-  "0xeD074DA2A76FD2Ca90C1508930b4FB4420e413B0", # BtcUsdPriceFeed 
-  "0xD9465D38f50f364b3263Cb219e58d4dB2D584530", # EthUsdPriceFeed
-  "0x56834Ff8D4b27db647Da97CA3bd8540f7fA0e89D", # OmgBtcPriceFeed
-  "0x225BAd150B9D5202DC805B34A0DF64B1a77459dF", # OmgEthPriceFeed
-  "0xE2Efa3fe66352e63F118bB9165435C5BEDB777d0"  # OmgUsdtPriceFeed
-]
-thresholds = [
-  2.0, # BtcUsdPriceFeed
-  2.0, # EthUsdPriceFeed
-  2.0, # OmgBtcPriceFeed
-  2.0, # OmgEthPriceFeed
-  2.0  # OmgUsdtPriceFeed
-]
+
+  [pricefeeds.BtcUsdPriceFeed]
+  contract_address = "0xeD074DA2A76FD2Ca90C1508930b4FB4420e413B0"
+  deviation_threshold_percentage = 2.0
+
+  [pricefeeds.EthUsdPriceFeed]
+  contract_address = "0xD9465D38f50f364b3263Cb219e58d4dB2D584530"
+  deviation_threshold_percentage = 2.0
+
+  [pricefeeds.OmgBtcPriceFeed]
+  contract_address = "0x56834Ff8D4b27db647Da97CA3bd8540f7fA0e89D"
+  deviation_threshold_percentage = 2.0
+
+  [pricefeeds.OmgEthPriceFeed]
+  contract_address = "0x225BAd150B9D5202DC805B34A0DF64B1a77459dF"
+  deviation_threshold_percentage = 2.0
+
+  [pricefeeds.OmgUsdtPriceFeed]
+  contract_address = "0xE2Efa3fe66352e63F118bB9165435C5BEDB777d0"
+  deviation_threshold_percentage = 2.0
 
 [account]
 # The address of the EOA that will create the transactions
@@ -26,7 +31,7 @@ max_secs_between_request_updates = 3600
 # The provider to which the poller needs to connect
 provider = "http://127.0.0.1:8539"
 provider_timeout_secs = 120
-gas_price = 15000000
+gas_price = 1000000000
 gas = 8000000
 tx_waiting_timeout_secs = 60
 tx_polling_latency_secs = 2

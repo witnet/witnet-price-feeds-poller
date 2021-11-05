@@ -1,16 +1,17 @@
 [pricefeeds]
-# ERC2362PriceFeed contracts
-addresses = [
-  "0x8594B74645644b6a5fdE15597D3ADc15C77284A1", # BtcUsdPriceFeed 
-  "0x80DfFcbD9Fa48553fbC98aa7c21D50Ae47753C89", # EthUsdPriceFeed
-  "0x81cc73426944cC15BE22a3d7c812282E66F2c689"  # CfxUsdtPriceFeed
-]
-thresholds = [
-  2.0, # BtcUsdPriceFeed
-  2.0, # EthUsdPriceFeed
-  2.0  # CfxUsdtPriceFeed
 
-]
+  [pricefeeds.BtcUsdPriceFeed]
+  contract_address = "0x8594B74645644b6a5fdE15597D3ADc15C77284A1"
+  deviation_threshold_percentage = 2.0
+
+  [pricefeeds.EthUsdPriceFeed]
+  contract_address = "0x80DfFcbD9Fa48553fbC98aa7c21D50Ae47753C89"
+  deviation_threshold_percentage = 2.0
+
+  [pricefeeds.CfxUsdtPriceFeed]
+  contract_address = "0x81cc73426944cC15BE22a3d7c812282E66F2c689"
+  deviation_threshold_percentage = 2.0
+
 [account]
 # The address of the EOA that will create the transactions
 # (needs to have a high enough balance)

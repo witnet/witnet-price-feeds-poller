@@ -51,7 +51,7 @@ def handle_requestUpdate(
       print("> Gas:", "{:,}".format(gas))
       print(f"> Reward: {round(reward / 10 ** 18, 5)} ETH")
       receipt = w3.eth.waitForTransactionReceipt(dr_id, tx_waiting_timeout_secs, tx_polling_latency_secs)
-      print("> > Total cost:", round((balance - w3.eth.getBalance(account_addr)) / 10 ** 18, 5), "ETH")
+      print("$ Total cost:", round((balance - w3.eth.getBalance(account_addr)) / 10 ** 18, 5), "ETH")
 
     except exceptions.TimeExhausted:
       print(f"Transaction for requesting update on {pricefeedcontract.address} is taking too long. Retrying in next iteration.")
@@ -110,7 +110,7 @@ def handle_completeUpdate(
       print("> Gas price:", "{:,}".format(gas_price))
       print("> Gas:", "{:,}".format(gas))
       receipt = w3.eth.waitForTransactionReceipt(read_id, tx_waiting_timeout_secs, tx_polling_latency_secs)
-      print("> > Total cost:", round((balance - w3.eth.getBalance(account_addr)) / 10 ** 18, 5), "ETH")
+      print("$ Total cost:", round((balance - w3.eth.getBalance(account_addr)) / 10 ** 18, 5), "ETH")
 
     except exceptions.TimeExhausted:
       print(f"Transaction for completing update on {pricefeedcontract.address} is taking too long. Retrying in next iteration.")
@@ -298,7 +298,6 @@ def log_loop(
       # Loop
       time.sleep(loop_interval_secs)
 
-
 def main(args):
     # Load the config from the config file:
     config = load_config(args.config_file)
@@ -335,7 +334,7 @@ def main(args):
       print(f"Connected to {provider}")
     except Exception as ex:
       print(f"Fatal: connection failed to {provider}: {ex}")
-      exit(-1)
+      exit(1)
 
     print(f"Current block: {current_block}")
 
