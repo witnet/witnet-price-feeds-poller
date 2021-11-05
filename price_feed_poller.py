@@ -263,14 +263,19 @@ def log_loop(
             last_price = element["lastPrice"]
             if last_price > 0 and len(thresholds) > 0:
               # If thresholds is configured, evaluate actual price deviation  
-              next_price = dry_run_request(element['feed'].functions.bytecode().call())
+              try:
+                next_price = dry_run_request(element['feed'].functions.bytecode().call())
+              except:
+                # If dry run fails, assume 0 deviation as to, at least, guarantee the heartbeat periodicity is met
+                print("Cannot dry run request:", element['feed'].functions.bytecode().call().hex())
+                next_price = last_price
               deviation = round(100 * ((next_price - last_price) / last_price), 2)
               if abs(deviation) < thresholds[index] and elapsed_secs < max_secs_between_request_updates:
-                # If deviation is below threshold, skip request update until another `min_secs_between_request_updates` secs
+                # If deviation is below threshold, skip request update until, at least, another `loop_interval_secs` secs
                 print(f"Price deviation from contract {element['feed'].address} is below threshold ({abs(deviation)}% < {thresholds[index]}%)")
                 continue
               else:
-                print(f"Next price integer value from contract {element['feed'].address} would rather be {next_price} instead of {last_price}.")
+                print(f"Next price integer value from contract {element['feed'].address} would rather be {next_price} instead of {last_price}.")            
             # Contract waiting for next request to be sent
             success = handle_requestUpdate(
               w3,
