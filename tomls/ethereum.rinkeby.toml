@@ -1,25 +1,11 @@
-[pricefeeds]
-
-  [pricefeeds.BtcUsdPriceFeed]
-  contract_address = "0xccAe308C9b91a3e3De8E0Dd4136Ce0Bb608e6ea4"
-  deviation_threshold_percentage = 2.0
-
-  [pricefeeds.EthUsdPriceFeed]
-  contract_address = "0x4566CaD4e76575f85fA423EF46080Afe353f7A05"
-  deviation_threshold_percentage = 2.0
-
-[account]
-# The address of the EOA that will create the transactions
-# (needs to have a high enough balance)
-address = "0x8d86Bc475bEDCB08179c5e6a4d494EbD3b44Ea8B"
-min_secs_between_request_updates = 300
-max_secs_between_request_updates = 3600
-
 [network]
-# The provider to which the poller needs to connect
+from = "0x8d86Bc475bEDCB08179c5e6a4d494EbD3b44Ea8B"
+gas = 350_000
+gas_price = 10_000_000_000
+name = "ethereum.rinkeby"
 provider = "http://127.0.0.1:8544"
 provider_timeout_secs = 120
-gas_price = 10000000000
-gas = 250000
+symbol = "rETH"
 tx_waiting_timeout_secs = 200
 tx_polling_latency_secs = 20
+witnet_resolution_secs = 240

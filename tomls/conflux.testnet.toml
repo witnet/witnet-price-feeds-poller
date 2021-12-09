@@ -1,29 +1,11 @@
-[pricefeeds]
-
-  [pricefeeds.BtcUsdPriceFeed]
-  contract_address = "0x8594B74645644b6a5fdE15597D3ADc15C77284A1"
-  deviation_threshold_percentage = 2.0
-
-  [pricefeeds.EthUsdPriceFeed]
-  contract_address = "0x80DfFcbD9Fa48553fbC98aa7c21D50Ae47753C89"
-  deviation_threshold_percentage = 2.0
-
-  [pricefeeds.CfxUsdtPriceFeed]
-  contract_address = "0x81cc73426944cC15BE22a3d7c812282E66F2c689"
-  deviation_threshold_percentage = 2.0
-
-[account]
-# The address of the EOA that will create the transactions
-# (needs to have a high enough balance)
-address = "0x10E824822C6A5C28dE3568DF99604D68e9fd9c8c"
-min_secs_between_request_updates = 300
-max_secs_between_request_updates = 3600
-
 [network]
-# The provider to which the poller needs to connect
+from = "0x10E824822C6A5C28dE3568DF99604D68e9fd9c8c"
+gas = 200_000
+gas_price = 1
+name = "conflux.testnet"
 provider = "http://127.0.0.1:8540"
 provider_timeout_secs = 120
-gas_price = 1
-gas = 200000
+symbol = "CFX"
 tx_waiting_timeout_secs = 60
 tx_polling_latency_secs = 2
+witnet_resolution_secs = 240

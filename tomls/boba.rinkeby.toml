@@ -1,37 +1,11 @@
-[pricefeeds]
-
-  [pricefeeds.BtcUsdPriceFeed]
-  contract_address = "0xeD074DA2A76FD2Ca90C1508930b4FB4420e413B0"
-  deviation_threshold_percentage = 2.0
-
-  [pricefeeds.EthUsdPriceFeed]
-  contract_address = "0xD9465D38f50f364b3263Cb219e58d4dB2D584530"
-  deviation_threshold_percentage = 2.0
-
-  [pricefeeds.OmgBtcPriceFeed]
-  contract_address = "0x56834Ff8D4b27db647Da97CA3bd8540f7fA0e89D"
-  deviation_threshold_percentage = 2.0
-
-  [pricefeeds.OmgEthPriceFeed]
-  contract_address = "0x225BAd150B9D5202DC805B34A0DF64B1a77459dF"
-  deviation_threshold_percentage = 2.0
-
-  [pricefeeds.OmgUsdtPriceFeed]
-  contract_address = "0xE2Efa3fe66352e63F118bB9165435C5BEDB777d0"
-  deviation_threshold_percentage = 2.0
-
-[account]
-# The address of the EOA that will create the transactions
-# (needs to have a high enough balance)
-address = "0x8d86Bc475bEDCB08179c5e6a4d494EbD3b44Ea8B"
-min_secs_between_request_updates = 300
-max_secs_between_request_updates = 3600
-
 [network]
-# The provider to which the poller needs to connect
+from = "0x8d86Bc475bEDCB08179c5e6a4d494EbD3b44Ea8B"
+gas = 8_000_000
+gas_price = 1_000_000_000
+name = "boba.rinkeby"
 provider = "http://127.0.0.1:8539"
 provider_timeout_secs = 120
-gas_price = 1000000000
-gas = 8000000
+symbol = "oETH"
 tx_waiting_timeout_secs = 60
 tx_polling_latency_secs = 2
+witnet_resolution_secs = 240

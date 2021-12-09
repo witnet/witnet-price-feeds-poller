@@ -1,25 +1,11 @@
-[pricefeeds]
-
-  [pricefeeds.BtcUsdPriceFeed]
-  contract_address = "0x4F8Ac2D45475A1894Cb85E3A21173d5e83041083"
-  deviation_threshold_percentage = 2.0
-
-  [pricefeeds.EthUsdPriceFeed]
-  contract_address = "0xD182e334e3c7140F8a520d326E333CA5f1FB7dDa"
-  deviation_threshold_percentage = 2.0
-
-[account]
-# The address of the EOA that will create the transactions
-# (needs to have a high enough balance)
-address = "0xA0E824822C6A5C28DE3568Df99604d68E9FD9C8c"
-min_secs_between_request_updates = 300
-max_secs_between_request_updates = 3600
-
 [network]
-# The provider to which the poller needs to connect
+from = "0xA0E824822C6A5C28DE3568Df99604d68E9FD9C8c"
+gas = 8_000_000
+gas_price = 500_000_000
+name = "celo.alfajores"
 provider = "http://127.0.0.1:8538"
 provider_timeout_secs = 120
-gas_price = 500000000
-gas = 8000000
+symbol = "CELO"
 tx_waiting_timeout_secs = 60
 tx_polling_latency_secs = 2
+witnet_resolution_secs = 240
