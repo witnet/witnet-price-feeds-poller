@@ -1,0 +1,264 @@
+{
+  "abi": "./src/abi/IWitnetPriceRegistry.json",
+  "chains": {
+    "boba": {
+      "networks": {
+        "boba.mainnet": {
+          "address": "",
+          "blockExplorer": "https://blockexplorer.boba.network/address/{address}",
+          "color": "#007dff",
+          "name": "Boba Mainnet",
+          "pollingPeriod": 300000,
+          "feeds": {
+            "Price-BOBA/USDT-6": {
+              "label": "₮",
+              "deviationPercentage": 1.0,
+              "maxSecsBetweenUpdates": 86400,
+              "minSecsBetweenUpdates": 3600
+            }
+          }
+        },
+        "boba.rinkeby": {
+          "address": "",
+          "blockExplorer": "https://blockexplorer.rinkeby.boba.network/address/{address}",
+          "color": "#1cd83d",
+          "name": "Boba Rinkeby",
+          "pollingPeriod": 300000,
+          "feeds": {
+            "Price-BOBA/USDT-6": {
+              "label": "₮",
+              "deviationPercentage": 1.0,
+              "maxSecsBetweenUpdates": 3600,
+              "minSecsBetweenUpdates": 300
+            },
+            "Price-BTC/USD-6": {
+              "label": "$",
+              "deviationPercentage": 1.0,
+              "maxSecsBetweenUpdates": 3600,
+              "minSecsBetweenUpdates": 300
+            },
+            "Price-ETH/USD-6": {
+              "label": "$",
+              "deviationPercentage": 1.0,
+              "maxSecsBetweenUpdates": 3600,
+              "minSecsBetweenUpdates": 300
+            },
+            "Price-OMG/BTC-9": {
+              "label": "BTC",
+              "deviationPercentage": 1.0,
+              "maxSecsBetweenUpdates": 3600,
+              "minSecsBetweenUpdates": 300
+            },
+            "Price-OMG/ETH-9": {
+              "label": "ETH",
+              "deviationPercentage": 1.0,
+              "maxSecsBetweenUpdates": 3600,
+              "minSecsBetweenUpdates": 300
+            },
+            "Price-OMG/USDT-6": {
+              "label": "₮",
+              "deviationPercentage": 1.0,
+              "maxSecsBetweenUpdates": 3600,
+              "minSecsBetweenUpdates": 300
+            }
+          }
+        }
+      }
+    },
+    "celo": {
+      "networks": {
+        "celo.alfajores": {
+          "address": "",
+          "blockExplorer": "https://alfajores-blockscout.celo-testnet.org/address/{address}",
+          "color": "#1cd8d2",
+          "name": "Celo Alfajores",
+          "pollingPeriod": 300000,
+          "feeds": {
+            "Price-BTC/USD-6": {
+              "label": "$",
+              "deviationPercentage": 1.0,
+              "maxSecsBetweenUpdates": 3600,
+              "minSecsBetweenUpdates": 300
+            },
+            "Price-CELO/EUR-6": {
+              "label": "€",
+              "deviationPercentage": 1.0,
+              "maxSecsBetweenUpdates": 3600,
+              "minSecsBetweenUpdates": 300
+            },
+            "Price-CELO/USD-6": {
+              "label": "$",
+              "deviationPercentage": 1.0,
+              "maxSecsBetweenUpdates": 3600,
+              "minSecsBetweenUpdates": 300
+            },
+            "Price-ETH/USD-6": {
+              "label": "$",
+              "deviationPercentage": 1.0,
+              "maxSecsBetweenUpdates": 3600,
+              "minSecsBetweenUpdates": 300
+            }
+          }
+        },
+        "celo.mainnet": {
+          "address": "",
+          "blockExplorer": "https://explorer.celo.org/address/{address}",
+          "color": "#ff8100",
+          "name": "Celo Mainnet",
+          "pollingPeriod": 300000,
+          "feeds": {
+            "Price-BTC/USD-6": {
+              "label": "$",
+              "deviationPercentage": 1.0,
+              "maxSecsBetweenUpdates": 86400,
+              "minSecsBetweenUpdates": 900
+            },
+            "Price-CELO/EUR-6": {
+              "label": "€",
+              "deviationPercentage": 1.0,
+              "maxSecsBetweenUpdates": 86400,
+              "minSecsBetweenUpdates": 900
+            },
+            "Price-CELO/USD-6": {
+              "label": "$",
+              "deviationPercentage": 1.0,
+              "maxSecsBetweenUpdates": 86400,
+              "minSecsBetweenUpdates": 900
+            },
+            "Price-ETH/USD-6": {
+              "label": "$",
+              "deviationPercentage": 1.0,
+              "maxSecsBetweenUpdates": 86400,
+              "minSecsBetweenUpdates": 900
+            }
+          }
+        }
+      }
+    },
+    "conflux": {
+      "networks": {
+        "conflux.testnet": {
+          "address": "",
+          "blockExplorer": "https://testnet.confluxscan.io/address/{address}",
+          "color": "#6600ff",
+          "name": "Conflux Testnet",
+          "pollingPeriod": 300000,
+          "feeds": {
+            "Price-BTC/USD-6": {
+              "label": "$",
+              "deviationPercentage": 1.0,
+              "maxSecsBetweenUpdates": 3600,
+              "minSecsBetweenUpdates": 300
+            },
+            "Price-CFX/USDT-6": {
+              "label": "₮",
+              "deviationPercentage": 1.0,
+              "maxSecsBetweenUpdates": 3600,
+              "minSecsBetweenUpdates": 300
+            },
+            "Price-ETH/USD-6": {
+              "label": "$",
+              "deviationPercentage": 1.0,
+              "maxSecsBetweenUpdates": 3600,
+              "minSecsBetweenUpdates": 300
+            }
+          }
+        },
+        "conflux.tethys": {
+          "address": "",
+          "blockExplorer": "https://confluxscan.io/address/{address}",
+          "color": "#ff0000",
+          "name": "Conflux Mainnet",
+          "pollingPeriod": 300000,
+          "feeds": {
+            "Price-BTC/USD-6": {
+              "label": "$",
+              "deviationPercentage": 1.0,
+              "maxSecsBetweenUpdates": 3600,
+              "minSecsBetweenUpdates": 900
+            },
+            "Price-CFX/USDT-6": {
+              "label": "₮",
+              "deviationPercentage": 1.0,
+              "maxSecsBetweenUpdates": 3600,
+              "minSecsBetweenUpdates": 900
+            },
+            "Price-ETH/USD-6": {
+              "label": "$",
+              "deviationPercentage": 1.0,
+              "maxSecsBetweenUpdates": 3600,
+              "minSecsBetweenUpdates": 900
+            }
+          }
+        }
+      }
+    },
+    "ethereum": {
+      "networks": {
+        "ethereum.goerli": {
+          "address": "0x4060c2916F4e4277dd310296e13885120571e5E1",
+          "blockExplorer": "https://goerli.etherscan.io/address/{address}",
+          "color": "#ff5599",
+          "name": "Ethereum Goerli",
+          "pollingPeriod": 1500000,
+          "feeds": {
+            "Price-BTC/USD-6": {
+              "label": "$",
+              "deviationPercentage": 1.0,
+              "maxSecsBetweenUpdates": 300,
+              "minSecsBetweenUpdates": 300
+            },
+            "Price-ETH/USD-6": {
+              "label": "$",
+              "deviationPercentage": 1.0,
+              "maxSecsBetweenUpdates": 900,
+              "minSecsBetweenUpdates": 300
+            }
+          }
+        },
+        "ethereum.mainnet": {
+          "address": "",
+          "blockExplorer": "https://etherscan.io/address/{address}",
+          "color": "#8d5fd3",
+          "name": "Ethereum Mainnet",
+          "pollingPeriod": 1500000,
+          "feeds": {
+            "Price-BTC/USD-6": {
+              "label": "$",
+              "deviationPercentage": 3.5,
+              "maxSecsBetweenUpdates": 86400,
+              "minSecsBetweenUpdates": 3600
+            },
+            "Price-ETH/USD-6": {
+              "label": "$",
+              "deviationPercentage": 3.5,
+              "maxSecsBetweenUpdates": 86400,
+              "minSecsBetweenUpdates": 3600
+            }
+          }
+        },
+        "ethereum.rinkeby": {
+          "address": "",
+          "blockExplorer": "https://rinkeby.etherscan.io/address/{address}",
+          "color": "#ff5599",
+          "name": "Ethereum Rinkeby",
+          "pollingPeriod": 1500000,
+          "feeds": {
+            "Price-BTC/USD-6": {
+              "label": "$",
+              "deviationPercentage": 1.0,
+              "maxSecsBetweenUpdates": 3600,
+              "minSecsBetweenUpdates": 300
+            },
+            "Price-ETH/USD-6": {
+              "label": "$",
+              "deviationPercentage": 1.0,
+              "maxSecsBetweenUpdates": 3600,
+              "minSecsBetweenUpdates": 300
+            }
+          }
+        }
+      }
+    }
+  }
+}
