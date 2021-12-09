@@ -1,9 +1,9 @@
 {
-  "name": "price-feeds-poller",
+  "name": "witnet-price-feeds-poller",
   "version": "1.0.0",
   "description": "",
   "main": "",
-  "repository": "https://github.com/witnet/price_feeds_poller",
+  "repository": "https://github.com/witnet/witnet-price-feeds-poller",
   "license": "MIT",
   "private": false,
   "scripts": {},
