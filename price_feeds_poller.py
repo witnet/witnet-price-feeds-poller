@@ -177,7 +177,8 @@ def log_loop(
         contract = pf["contract"]
         # Poll latest update status
         try:
-          status = contract.functions.latestUpdateStatus().call()
+          lastValue = contract.functions.lastValue().call()
+          status = lastValue[2]
           current_ts = int(time.time())
           elapsed_secs = current_ts - pf["lastTimestamp"]
         
@@ -185,18 +186,17 @@ def log_loop(
           if pf["pendingUpdate"] == True:
             # A valid result has just been detected:
             if status == 200:
-              lastValue = contract.functions.lastValue().call()
               pf["lastPrice"] = lastValue[0]
               elapsed_secs = lastValue[1] - pf["lastTimestamp"] 
               pf["lastTimestamp"] = lastValue[1]
-              print(f"{pf['caption']} << drTxHash: {lastValue[2].hex()}, lastPrice: {pf['lastPrice']} after {elapsed_secs} secs")
+              print(f"{pf['caption']} << drTxHash: {contract.functions.latestUpdateDrTxHash().call().hex()}, lastPrice: {lastValue[0]} after {elapsed_secs} secs")
               pf["pendingUpdate"] = False
               
             # An invalid result has just been detected:
             elif status == 400:
               latestDrTxHash = contract.functions.latestUpdateDrTxHash().call()
               latestError = contract.functions.latestUpdateErrorMessage().call()
-              print(f"{pf['caption']} >< drTxHash: {latestDrTxHash.hex()}, latestError: \"{latestError}\" after {elapsed_secs} secs")
+              print(f"{pf['caption']} >< drTxHash: {latestDrTxHash.hex()}, latestError: \"{str(latestError)}\" after {elapsed_secs} secs")
               pf["pendingUpdate"] = False
 
             else:
