@@ -45,19 +45,20 @@ def handle_requestUpdate(
 
       # Get receipt of the transaction
       print(f" - Witnet    : {contract.functions.witnet().call()}")
-      print(f" - Contract  : {contract.address}")
+      print(f" - Pricefeed : {contract.address}")
       print(f" - Account   : {network_from}")
       print(f" - Balance   : {round(balance / 10 ** 18, 5)} {network_symbol}")
+      print(f" - Paying fee: {round(fee / 10 ** 18, 5)} {network_symbol}")
       print( " - Gas limit :", "{:,}".format(network_gas))
       print( " - Gas price :", "{:,}".format(network_gas_price))
-      print(f" - Paying fee: {round(fee / 10 ** 18, 5)} {network_symbol}")
-      print(f" - Tx hash   : {tx.hex()}")
+      print(f" = Tx hash   : {tx.hex()}")
       receipt = w3.eth.waitForTransactionReceipt(
         tx,
         network_tx_waiting_timeout_secs,
         network_tx_polling_latency_secs
       )
-      print( " - Total cost:", round((balance - w3.eth.getBalance(network_from)) / 10 ** 18, 5), network_symbol)
+      print( " = Tx.eff.gas:", "{:,}".format(receipt.get("gasUsed")))
+      print( " = Total cost:", round((balance - w3.eth.getBalance(network_from)) / 10 ** 18, 5), network_symbol)
 
     except exceptions.TimeExhausted:
       print(f" * Transaction is taking too long.")
@@ -73,7 +74,7 @@ def handle_requestUpdate(
       return 0
     else:      
       requestId = contract.functions.latestQueryId().call()
-      print(f" > Request id: {requestId}")
+      print(f" < Request id: {requestId}")
       return requestId
 
 def log_master_balance(csv_filename, addr, balance, txhash):
