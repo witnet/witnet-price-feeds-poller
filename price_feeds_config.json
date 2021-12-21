@@ -263,7 +263,7 @@
     "kcc": {
       "networks": {
         "kcc.testnet": {
-          "address": "0xeD074DA2A76FD2Ca90C1508930b4FB4420e413B0",
+          "address": "0x291D9B29055e81E1aACB7a40c4530866E29C7bF2",
           "blockExplorer": "https://scan-testnet.kcc.network/address/{address}",
           "color": "#ff0066",
           "name": "KCC Testnet",
@@ -284,6 +284,32 @@
           }
         }
       }
+    },
+    "metis": {
+      "networks": {
+        "metis.rinkeby": {
+          "address": "0xB4B2E2e00e9d6E5490d55623E4F403EC84c6D33f",
+          "blockExplorer": "https://stardust-explorer.metis.io/address/{address}",
+          "color": "#ff6600",
+          "name": "METIS Stardust",
+          "pollingPeriod": 10000,
+          "feeds": {
+            "Price-BTC/USD-6": {
+              "label": "$",
+              "deviationPercentage": 1.0,
+              "maxSecsBetweenUpdates": 300,
+              "minSecsBetweenUpdates": 300
+            },
+            "Price-ETH/USD-6": {
+              "label": "$",
+              "deviationPercentage": 1.0,
+              "maxSecsBetweenUpdates": 300,
+              "minSecsBetweenUpdates": 300
+            }
+          }
+        }
+      }
+    },
     }
   }
 }
