@@ -132,8 +132,8 @@ def log_loop(
     
     pfs = []    
     for caption in pfs_config['feeds']:
-      erc2362id = pfs_router.functions.hashPriceCaption(caption).call().hex()
-      if pfs_router.functions.supportsPricePair(erc2362id).call():
+      erc2362id = pfs_router.functions.currencyPairId(caption).call().hex()
+      if pfs_router.functions.supportsCurrencyPair(erc2362id).call():
         contract = wpf_contract(w3, pfs_router.functions.getPriceFeed(erc2362id).call())
         deviation = pfs_config['feeds'][caption].get("deviationPercentage", 2.0)
         heartbeat = int(pfs_config['feeds'][caption].get("maxSecsBetweenUpdates", 86400))
