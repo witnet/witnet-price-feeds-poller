@@ -1,0 +1,11 @@
+[network]
+from = "0x8d86Bc475bEDCB08179c5e6a4d494EbD3b44Ea8B"
+gas = 300_000
+gas_price = 30_000_000_000
+name = "polygon.mumbai"
+provider = "http://127.0.0.1:8535"
+provider_timeout_secs = 60
+symbol = "MATIC"
+tx_waiting_timeout_secs = 120
+tx_polling_latency_secs = 2
+witnet_resolution_secs = 240
