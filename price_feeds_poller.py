@@ -187,18 +187,18 @@ def log_loop(
           if pf["pendingUpdate"] == True:
             # A valid result has just been detected:
             if status == 200:
+              pf["pendingUpdate"] = False
               pf["lastPrice"] = lastValue[0]
               elapsed_secs = lastValue[1] - pf["lastTimestamp"] 
               pf["lastTimestamp"] = lastValue[1]
               print(f"{pf['caption']} << drTxHash: {contract.functions.latestUpdateDrTxHash().call().hex()}, lastPrice: {lastValue[0]} after {elapsed_secs} secs")
-              pf["pendingUpdate"] = False
               
             # An invalid result has just been detected:
             elif status == 400:
+              pf["pendingUpdate"] = False
               latestDrTxHash = contract.functions.latestUpdateDrTxHash().call()
               latestError = contract.functions.latestUpdateErrorMessage().call()
               print(f"{pf['caption']} >< drTxHash: {latestDrTxHash.hex()}, latestError: \"{str(latestError)}\" after {elapsed_secs} secs")
-              pf["pendingUpdate"] = False
 
             else:
               print(f"{pf['caption']} .. awaiting response from {pf['witnet']}::{pf['latestRequestId']}")
@@ -285,7 +285,7 @@ def main(args):
     ))
     try:
       current_block = w3.eth.blockNumber
-      print(f"Connected to '{network_name}' at block {current_block} via {network_provider}")
+      print(f"Connected to '{network_name}' at block #{current_block} via {network_provider}")
     except Exception as ex:
       print(f"Fatal: connection failed to {network_provider}: {ex}")
       exit(1)
