@@ -1,6 +1,6 @@
 {
   "name": "price-feed-poller",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "",
   "main": "",
   "repository": "https://github.com/stampery-labs/price_feed_poller",
