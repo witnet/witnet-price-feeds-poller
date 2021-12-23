@@ -180,7 +180,7 @@ def log_loop(
         # Poll latest update status
         try:
           lastValue = contract.functions.lastValue().call()
-          status = lastValue[2]
+          status = lastValue[3]
           current_ts = int(time.time())
           elapsed_secs = current_ts - pf["lastTimestamp"]
         
@@ -192,7 +192,7 @@ def log_loop(
               pf["lastPrice"] = lastValue[0]
               elapsed_secs = lastValue[1] - pf["lastTimestamp"] 
               pf["lastTimestamp"] = lastValue[1]
-              print(f"{pf['caption']} << drTxHash: {contract.functions.latestUpdateDrTxHash().call().hex()}, lastPrice: {lastValue[0]} after {elapsed_secs} secs")
+              print(f"{pf['caption']} << drTxHash: {lastValue[2].hex()}, lastPrice: {lastValue[0]} after {elapsed_secs} secs")
               
             # An invalid result has just been detected:
             elif status == 400:
