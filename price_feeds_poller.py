@@ -9,6 +9,7 @@ import time
 
 from configs import load_network_config, load_price_feeds_config
 from contracts import wpr_contract, wpf_contract
+from threading import Timer
 from web3 import Web3, exceptions
 
 # Post a data request to the post_dr method of the WRB contract
@@ -106,8 +107,16 @@ def dry_run_request(bytecode):
   cmdline += bytecode.hex()
   cmdline += " | tail -n 2 | head -n 1 | awk -F: '{ print $2 }' | sed 's/ //g' | tr -d \"│\""
   process = subprocess.Popen(cmdline, stdout=subprocess.PIPE, shell=True)
-  process.wait()
-  output, error = process.communicate()
+  timer = Timer(15, process.kill)
+  try:
+    timer.start()
+    process.wait()
+    output, error = process.communicate()
+  finally:
+    timer.cancel()
+
+  if len(output) == 0:
+    raise Exception("Timeout while trying data request")
   if error is not None:
     raise Exception(error)
   return int(output)
@@ -213,9 +222,9 @@ def log_loop(
                 # ...calculate price deviation...
                 try:
                   next_price = dry_run_request(contract.functions.bytecode().call())
-                except:
+                except Exception as ex:
                   # If dry run fails, assume 0 deviation as to, at least, guarantee the heartbeat periodicity is met
-                  print("Dry-run request failed:")
+                  print("Dry-run request failed:", ex)
                   print(contract.functions.bytecode().call().hex())
                   next_price = last_price
                 deviation = round(100 * ((next_price - last_price) / last_price), 2)
