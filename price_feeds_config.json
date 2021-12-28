@@ -330,6 +330,12 @@
               "deviationPercentage": 1.0,
               "maxSecsBetweenUpdates": 300,
               "minSecsBetweenUpdates": 300
+            },
+            "Price-METIS/USDT-6": {
+              "label": "₮",
+              "deviationPercentage": 1.0,
+              "maxSecsBetweenUpdates": 300,
+              "minSecsBetweenUpdates": 300
             }
           }
         }

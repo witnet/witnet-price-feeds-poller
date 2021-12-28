@@ -9,3 +9,4 @@ symbol = "KCS"
 tx_waiting_timeout_secs = 60
 tx_polling_latency_secs = 6
 witnet_resolution_secs = 240
+witnet_toolkit_timeout_secs = 15
