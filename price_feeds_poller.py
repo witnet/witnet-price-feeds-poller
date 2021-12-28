@@ -211,7 +211,7 @@ def log_loop(
               print(f"{pf['caption']} >< drTxHash: {latestDrTxHash.hex()}, latestError: \"{str(latestError)}\" after {elapsed_secs} secs")
 
             else:
-              print(f"{pf['caption']} .. awaiting response from {pf['witnet']}::{pf['latestRequestId']}")
+              print(f"{pf['caption']} .. contract {contract.address} awaits response from {pf['witnet']}::{pf['latestRequestId']}")
               
           # If no update is pending...
           else :
