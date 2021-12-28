@@ -4,6 +4,10 @@ import toml
 class TomlError(Exception):
     pass
 
+def load_version():
+  package = json.load(open("package.json"))
+  return package.get("name") + " v" + package.get("version")
+
 # Load price feeds configuration parameters from file
 def load_price_feeds_config(filename, network_name):
   config = json.load(open(filename))

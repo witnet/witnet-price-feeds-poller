@@ -7,7 +7,7 @@ import subprocess
 import sys
 import time
 
-from configs import load_network_config, load_price_feeds_config
+from configs import load_network_config, load_price_feeds_config, load_version
 from contracts import wpr_contract, wpf_contract
 from threading import Timer
 from web3 import Web3, exceptions
@@ -269,6 +269,7 @@ def log_loop(
 
 def main(args):    
     print("================================================================================")
+    print(load_version())
     # Read network parameters from configuration file:
     network_config = load_network_config(args.toml_file)
     network_name = network_config['network']['name']
