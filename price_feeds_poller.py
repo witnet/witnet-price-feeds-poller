@@ -102,12 +102,12 @@ def stdoutIO(stdout=None):
   yield stdout
   sys.stdout = old
 
-def dry_run_request(bytecode):
+def dry_run_request(bytecode, timeout_secs):
   cmdline = "npx witnet-toolkit try-data-request --hex "
   cmdline += bytecode.hex()
   cmdline += " | tail -n 2 | head -n 1 | awk -F: '{ print $2 }' | sed 's/ //g' | tr -d \"│\""
   process = subprocess.Popen(cmdline, stdout=subprocess.PIPE, shell=True)
-  timer = Timer(15, process.kill)
+  timer = Timer(timeout_secs, process.kill)
   try:
     timer.start()
     process.wait()
@@ -132,7 +132,8 @@ def log_loop(
     network_gas_price,
     network_tx_waiting_timeout_secs,
     network_tx_polling_latency_secs,
-    network_witnet_resolution_secs    
+    network_witnet_resolution_secs,
+    network_witnet_toolkit_timeout_secs
   ):
     pfs_router = wpr_contract(w3, pfs_config['address'])
     if pfs_router.address is None:
@@ -230,7 +231,7 @@ def log_loop(
               if last_price > 0:
                 # ...calculate price deviation...
                 try:
-                  next_price = dry_run_request(contract.functions.bytecode().call())
+                  next_price = dry_run_request(contract.functions.bytecode().call(), network_witnet_toolkit_timeout_secs)
                 except Exception as ex:
                   # If dry run fails, assume 0 deviation as to, at least, guarantee the heartbeat periodicity is met
                   print("Dry-run request failed:", ex)
@@ -291,6 +292,7 @@ def main(args):
     network_tx_waiting_timeout_secs = network_config["network"].get("tx_waiting_timeout_secs", 130)
     network_tx_polling_latency_secs = network_config["network"].get("tx_polling_latency_secs", 13)
     network_witnet_resolution_secs = network_config["network"].get("dr_resolution_latency_secs", 300)
+    network_witnet_toolkit_timeout_secs = network_config["network"].get("witnet_toolkit_timeout_secs", 15)
 
     # Read pricefeeds parameters from configuration file:
     pfs_config = load_price_feeds_config(args.json_file, network_name)
@@ -344,7 +346,8 @@ def main(args):
       network_gas_price,      
       network_tx_waiting_timeout_secs,
       network_tx_polling_latency_secs,
-      network_witnet_resolution_secs      
+      network_witnet_resolution_secs,
+      network_witnet_toolkit_timeout_secs
     )
 
 if __name__ == '__main__':
