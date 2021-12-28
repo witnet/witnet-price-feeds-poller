@@ -190,12 +190,26 @@ def log_loop(
         contract = pf["contract"]
         # Poll latest update status
         try:
+          # Detect eventual pricefeed updates in the router:
           contractAddr = pfs_router.functions.getPriceFeed(pf["id"]).call()
           if contract.address != contractAddr:
-            print(f"{pf['caption']} >< contract route changed from {contract.address} to {contractAddr}")
-            pf["contract"] = wpf_contract(w3, contractAddr)
+            print(f"{pf['caption']} <> contract route changed from {contract.address} to {contractAddr}")
+            contract = wpf_contract(w3, contractAddr)
+            pf["contract"] = contract
+            if contractAddr != "0x0000000000000000000000000000000000000000":
+              try:
+                pf["deviation"] = pfs_config['feeds'][caption].get("deviationPercentage", 2.0)
+                pf["heartbeat"] = int(pfs_config['feeds'][caption].get("maxSecsBetweenUpdates", 86400))
+                pf["lastPrice"] = int(contract.functions.lastPrice().call())
+                pf["lastTimestamp"] = contract.functions.lastTimestamp().call()
+                pf["latestQueryId"] = contract.functions.latestQueryId().call()
+                pf["pendingUpdate"] = contract.functions.pendingUpdate().call()
+                pf["witnet"] = contract.functions.witnet().call()
+              except Exception as ex:
+                print(f"{pf['caption']} >< unable to read metadata from new contract {contractAddr}: {ex}")
 
           if contractAddr == "0x0000000000000000000000000000000000000000":
+            # Nothing to do if router stopped supporting this pricefeed
             continue
 
           lastValue = contract.functions.lastValue().call()
