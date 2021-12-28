@@ -153,6 +153,7 @@ def log_loop(
         pendingUpdate = contract.functions.pendingUpdate().call()
         witnet = contract.functions.witnet().call()
         pfs.append({
+          "id": erc2362id,
           "caption": caption,
           "contract": contract,
           "deviation": deviation,
@@ -188,6 +189,14 @@ def log_loop(
         contract = pf["contract"]
         # Poll latest update status
         try:
+          contractAddr = pfs_router.functions.getPriceFeed(pf["id"]).call()
+          if contract.address != contractAddr:
+            print(f"{pf['caption']} >< contract route changed from {contract.address} to {contractAddr}")
+            pf["contract"] = wpf_contract(w3, contractAddr)
+
+          if contractAddr == "0x0000000000000000000000000000000000000000":
+            continue
+
           lastValue = contract.functions.lastValue().call()
           status = lastValue[3]
           current_ts = int(time.time())
