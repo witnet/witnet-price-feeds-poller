@@ -106,20 +106,26 @@ def dry_run_request(bytecode, timeout_secs):
   cmdline = "npx witnet-toolkit try-data-request --hex "
   cmdline += bytecode.hex()
   cmdline += " | tail -n 2 | head -n 1 | awk -F: '{ print $2 }' | sed 's/ //g' | tr -d \"│\""
-  process = subprocess.Popen(cmdline, stdout=subprocess.PIPE, shell=True)
-  timer = Timer(timeout_secs, process.kill)
-  try:
-    timer.start()
-    process.wait()
-    output, error = process.communicate()
-  finally:
-    timer.cancel()
+  
+  # Dry-run result needs to be fetched from temporary file, 
+  # because of https://bugs.python.org/issue30154.
+  with open("tmp.out", "w+") as output:
+    process = subprocess.Popen(
+      cmdline,
+      stdout = output,
+      shell = True,
+    )
+    timer = Timer(timeout_secs, process.kill)
+    try:
+      timer.start()
+      process.wait()
+    finally:
+      timer.cancel()
 
-  if len(output) == 0:
-    raise Exception("Timeout while trying data request")
-  if error is not None:
-    raise Exception(error)
-  return int(output)
+  with open("tmp.out", "r") as output:
+    if os.stat("tmp.out").st_size == 0:
+      raise Exception(f"Timeout while trying data request ({timeout_secs} secs)")
+    return int(output.read())
 
 def log_loop(
     w3,

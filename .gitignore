@@ -142,5 +142,6 @@ node_modules/
 yarn.lock
 package-lock.json
 
-# CSV files
+# Other files
 *.csv
+*.out

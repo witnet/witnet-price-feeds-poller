@@ -5,6 +5,7 @@
 .__pycache__
 .share
 *.csv
+*.out
 docker
 node_modules
 tomls
