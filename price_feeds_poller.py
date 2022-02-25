@@ -75,7 +75,7 @@ def handle_requestUpdate(
       return 0
     else:      
       requestId = contract.functions.latestQueryId().call()
-      print(f" < Request id: {requestId}")
+      print(f" ~ Request id: {requestId}")
       return requestId
 
 def log_master_balance(csv_filename, addr, balance, txhash):
@@ -115,12 +115,7 @@ def dry_run_request(bytecode, timeout_secs):
       stdout = output,
       shell = True,
     )
-    timer = Timer(timeout_secs, process.kill)
-    try:
-      timer.start()
-      process.wait()
-    finally:
-      timer.cancel()
+    process.wait(timeout=timeout_secs)
 
   with open("tmp.out", "r") as output:
     if os.stat("tmp.out").st_size == 0:
