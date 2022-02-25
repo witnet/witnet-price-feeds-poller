@@ -1,0 +1,12 @@
+[network]
+from = "0x8d86Bc475bEDCB08179c5e6a4d494EbD3b44Ea8B"
+gas = 8_000_000
+gas_price = 35_000_000_000
+name = "avalanche.fuji"
+provider = "http://127.0.0.1:8533"
+provider_timeout_secs = 120
+symbol = "AVAX"
+tx_waiting_timeout_secs = 60
+tx_polling_latency_secs = 2
+witnet_resolution_secs = 240
+witnet_toolkit_timeout_secs = 15
