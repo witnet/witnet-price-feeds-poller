@@ -9,3 +9,4 @@
 docker
 node_modules
 tomls
+price_feeds_config.json
