@@ -86,17 +86,21 @@ def handle_requestUpdate(
 
     except exceptions.TimeExhausted:
       print(f"   ** Transaction is taking too long !!")
+      return [ 0 ]
 
     except Exception as ex:
       print(f"   xx Transaction rejected: {ex}")
+      return [ 0 ]
 
     # Check if transaction was succesful
     if receipt['status'] == False:
       print(f"   $$ Transaction reverted !!")
+      return [ -1, tx.hex() ]
     else:      
-      requestId = contract.functions.latestQueryId().call()
-      print(f" ~ Request id: {requestId}")
-      return requestId
+      logs = contract.events.PriceFeeding().processReceipt(receipt, errors=DISCARD)
+      requestId = logs[0].args.queryId
+      print(f" <<<< Request id : {requestId}")      
+      return [ requestId ]
 
 def log_master_balance(csv_filename, addr, balance, txhash):
   if csv_filename is not None:
@@ -151,6 +155,7 @@ def log_loop(
     network_from,
     network_gas,
     network_gas_price,
+    network_max_reverts,
     network_tx_waiting_timeout_secs,
     network_tx_polling_latency_secs,
     network_witnet_resolution_secs,
@@ -187,7 +192,10 @@ def log_loop(
           "latestRequestId": latestQueryId,
           "cooldown": cooldown,
           "pendingUpdate": pendingUpdate,
-          "witnet": witnet
+          "witnet": witnet,
+          "reverts": 0,
+          "disabled": False,
+          "lastRevertedTx": ""
         })
         print(f"{caption}:")
         print(f"  => WitnetRequestBoard: {witnet}")
@@ -228,17 +236,26 @@ def log_loop(
             if contractAddr != "0x0000000000000000000000000000000000000000":
               try:
                 pf["deviation"] = pfs_config['feeds'][caption].get("deviationPercentage", 2.0)
+                pf["disabled"] = False
                 pf["heartbeat"] = int(pfs_config['feeds'][caption].get("maxSecsBetweenUpdates", 86400))
                 pf["lastPrice"] = int(contract.functions.lastPrice().call())
+                pf["lastRevertedTx"] = ""
                 pf["lastTimestamp"] = contract.functions.lastTimestamp().call()
                 pf["latestQueryId"] = contract.functions.latestQueryId().call()
                 pf["pendingUpdate"] = contract.functions.pendingUpdate().call()
+                pf["reverts"] = 0
                 pf["witnet"] = contract.functions.witnet().call()
+                
               except Exception as ex:
                 print(f"{caption} >< unable to read metadata from new contract {contractAddr}: {ex}")
 
           if contractAddr == "0x0000000000000000000000000000000000000000":
             # Nothing to do if router stopped supporting this pricefeed
+            continue
+
+          if pf["disabled"]:
+            # Skip if this pricefeed is disabled
+            print(f"{caption} >< too many reverts: see last reverted tx: {pf['lastRevertedTx']}")
             continue
 
           lastValue = contract.functions.lastValue().call()
@@ -291,6 +308,7 @@ def log_loop(
               if (elapsed_secs >= pf['heartbeat'] - network_witnet_resolution_secs):
                 reason = f"of heartbeat and Witnet latency"
               print(f"{caption} >> Requesting update after {elapsed_secs} seconds because {reason}:")
+              result = handle_requestUpdate(
                 w3,
                 csv_filename,
                 pfs_router,
@@ -302,9 +320,17 @@ def log_loop(
                 network_tx_waiting_timeout_secs,
                 network_tx_polling_latency_secs
               )
+              latestRequestId = result[0]
               if latestRequestId > 0:
-                pf["pendingUpdate"] = True
                 pf["latestRequestId"] = latestRequestId
+                pf["pendingUpdate"] = True
+                pf["reverts"] = 0
+
+              elif latestRequestId < 0:
+                pf["lastRevertedTx"] = result[1]
+                pf["reverts"] = pf["reverts"] + 1
+                if pf["reverts"] >= network_max_reverts:
+                  pf["disabled"] = True
 
             else:
               secs_until_next_check = pf['cooldown'] - elapsed_secs - network_witnet_resolution_secs
@@ -334,6 +360,7 @@ def main(args):
     network_from = network_config["network"]["from"]
     network_gas = network_config["network"].get("gas")
     network_gas_price = network_config["network"].get("gas_price")
+    network_max_reverts = network_config["network"].get("max_reverts", 3)
     network_tx_waiting_timeout_secs = network_config["network"].get("tx_waiting_timeout_secs", 130)
     network_tx_polling_latency_secs = network_config["network"].get("tx_polling_latency_secs", 13)
     network_witnet_resolution_secs = network_config["network"].get("dr_resolution_latency_secs", 300)
@@ -406,6 +433,7 @@ def main(args):
       network_from,
       network_gas,
       network_gas_price,      
+      network_max_reverts,
       network_tx_waiting_timeout_secs,
       network_tx_polling_latency_secs,
       network_witnet_resolution_secs,
