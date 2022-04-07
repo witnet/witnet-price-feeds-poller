@@ -1,0 +1,7 @@
+[network]
+from = "0x8d86Bc475bEDCB08179c5e6a4d494EbD3b44Ea8B"
+name = "moonbeam.moonbase"
+provider = "http://127.0.0.1:8531"
+symbol = "DEV"
+tx_waiting_timeout_secs = 120
+tx_polling_latency_secs = 10
