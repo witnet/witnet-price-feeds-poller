@@ -19,6 +19,7 @@ from web3.middleware import geth_poa_middleware
 def handle_requestUpdate(
     w3,
     csv_filename,
+    router,
     contract,
     network_symbol,    
     network_from,
@@ -29,53 +30,69 @@ def handle_requestUpdate(
   ):
 
     try:
+      print(f" - WitnetRequestBoard: {contract.functions.witnet().call()}")
+      print(f" - WitnetPriceRouter:  {router.address}")
+      print(f" - WitnetPriceFeed:    {contract.address}")
+
       # Check that the account has enough balance
       balance = w3.eth.getBalance(network_from)
       if balance == 0:
           raise Exception("Master account run out of funds")
+      print(f" - Account       : {network_from}")        
+      print(f" - Balance       : {round(balance / 10 ** 18, 5)} {network_symbol}")
 
+      # Apply gas price strategy, if any
       if network_gas_price is None:
-        print(f"Estimating gas price from last blocks...")
         network_gas_price = w3.eth.generateGasPrice()
+      print( " - Tx. gas price :", "{:,}".format(network_gas_price))     
+      
+      if network_gas is not None:
+        print( " - Tx. gas limit :", "{:,}".format(network_gas))
 
+      # Estimate evm+witnet fee
       fee = contract.functions.estimateUpdateFee(network_gas_price).call()
-      tx = contract.functions.requestUpdate().transact({
-        "from": network_from,
-        "gas": network_gas,
-        "gasPrice": network_gas_price,
-        "value": fee
-      })
-      log_master_balance(csv_filename, network_from, balance, tx.hex())
+      print(f" - Tx. value     : {round(fee / 10 ** 18, 5)} {network_symbol}")
 
-      # Get receipt of the transaction
-      print(f" - Witnet    : {contract.functions.witnet().call()}")
-      print(f" - Pricefeed : {contract.address}")
-      print(f" - Account   : {network_from}")
-      print(f" - Balance   : {round(balance / 10 ** 18, 5)} {network_symbol}")
-      print(f" - Paying fee: {round(fee / 10 ** 18, 5)} {network_symbol}")
-      print( " - Gas limit :", "{:,}".format(network_gas))
-      print( " - Gas price :", "{:,}".format(network_gas_price))
-      print(f" = Tx hash   : {tx.hex()}")
+      # Send Web3 transaction ..
+      if network_gas is None:
+        # .. without a gas limit
+        tx = contract.functions.requestUpdate().transact({
+          "from": network_from,
+          "gasPrice": network_gas_price,
+          "value": fee
+        })
+      else:
+        # .. with the gas limit specified in config file        
+        tx = contract.functions.requestUpdate().transact({
+          "from": network_from,
+          "gas": network_gas,
+          "gasPrice": network_gas_price,
+          "value": fee
+        })
+
+      # Log send transaction attempt
+      log_master_balance(csv_filename, network_from, balance, tx.hex())
+      print(f" ~ Tx. hash      : {tx.hex()}")      
+
+      # Wait for tx receipt and print relevant tx info upon reception
       receipt = w3.eth.waitForTransactionReceipt(
         tx,
         network_tx_waiting_timeout_secs,
         network_tx_polling_latency_secs
       )
-      print( " = Tx.eff.gas:", "{:,}".format(receipt.get("gasUsed")))
-      print( " = Total cost:", round((balance - w3.eth.getBalance(network_from)) / 10 ** 18, 5), network_symbol)
+      print( " > Tx. block num.:", "{:,}".format(receipt.get("blockNumber")))
+      print( " > Tx. total gas :", "{:,}".format(receipt.get("gasUsed")))
+      print( " > Tx. total fee :", round((balance - w3.eth.getBalance(network_from)) / 10 ** 18, 5), network_symbol)
 
     except exceptions.TimeExhausted:
-      print(f" * Transaction is taking too long.")
-      return 0
+      print(f"   ** Transaction is taking too long !!")
 
     except Exception as ex:
-      print(f" x Transaction rejected: {ex}")
-      return 0
+      print(f"   xx Transaction rejected: {ex}")
 
     # Check if transaction was succesful
     if receipt['status'] == False:
-      print(f" x Transaction reverted!")
-      return 0
+      print(f"   $$ Transaction reverted !!")
     else:      
       requestId = contract.functions.latestQueryId().call()
       print(f" ~ Request id: {requestId}")
@@ -269,6 +286,7 @@ def log_loop(
               latestRequestId = handle_requestUpdate(
                 w3,
                 csv_filename,
+                pfs_router,
                 contract,
                 network_symbol,
                 network_from,
@@ -307,8 +325,8 @@ def main(args):
     network_provider_poa = network_config["network"].get("provider_poa", False)
     network_provider_timeout_secs = network_config['network'].get("provider_timeout_secs", 60)
     network_from = network_config["network"]["from"]
-    network_gas = network_config["network"].get("gas", 4000000)
-    network_gas_price = network_config["network"].get("gas_price", "estimate_medium")
+    network_gas = network_config["network"].get("gas")
+    network_gas_price = network_config["network"].get("gas_price")
     network_tx_waiting_timeout_secs = network_config["network"].get("tx_waiting_timeout_secs", 130)
     network_tx_polling_latency_secs = network_config["network"].get("tx_polling_latency_secs", 13)
     network_witnet_resolution_secs = network_config["network"].get("dr_resolution_latency_secs", 300)
@@ -332,7 +350,7 @@ def main(args):
 
     # If network is Ethereum, and gas price was not specified, try to activate medium_gas_price_strategy: 
     if not isinstance(network_gas_price, int):
-      if network_gas_price == "estimate_medium" and w3.eth.chainId == 1:
+      if network_gas_price == "estimate_medium":
         from web3 import middleware
         from web3.gas_strategies.time_based import medium_gas_price_strategy
 
@@ -345,12 +363,20 @@ def main(args):
         w3.middleware_onion.add(middleware.simple_cache_middleware)
 
         network_gas_price = None
+        print("Gas price strategy: estimate_medium")
+      
+      elif network_gas_price is None:
+        w3.eth.set_gas_price_strategy(rpc_gas_price_strategy)
+        print("Gas price strategy: eth_gasPrice")
+      
       else:
         if network_gas_price == "estimate_medium" and w3.eth.chainId != 1:
-          print(f"Invalid gas price: {network_gas_price}. \"estimate_medium\" can only be used for mainnet (current id: {w3.eth.chainId})")
+         print(f"Invalid gas price: {network_gas_price}. \"estimate_medium\" can only be used for mainnet (current id: {w3.eth.chainId})")
         else:
-          print(f"Invalid gas price: {network_gas_price}. `gas_price` can only be an integer or \"estimate_medium\".")
+          print(f"Invalid gas price: {network_gas_price}.")
         exit(1)
+    else:    
+      print(f"Gas price strategy: invariant ({'{:,}'.format(network_gas_price)})")
 
     # Enter infinite loop
     log_loop(
