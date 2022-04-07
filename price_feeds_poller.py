@@ -298,11 +298,13 @@ def log_loop(
 def main(args):    
     print("================================================================================")
     print(load_version())
+    
     # Read network parameters from configuration file:
     network_config = load_network_config(args.toml_file)
     network_name = network_config['network']['name']
     network_symbol = network_config["network"].get("symbol", "ETH")
     network_provider = args.provider if args.provider else network_config['network']['provider']
+    network_provider_poa = network_config["network"].get("provider_poa", False)
     network_provider_timeout_secs = network_config['network'].get("provider_timeout_secs", 60)
     network_from = network_config["network"]["from"]
     network_gas = network_config["network"].get("gas", 4000000)
@@ -323,12 +325,10 @@ def main(args):
       network_provider,
       request_kwargs={'timeout': network_provider_timeout_secs}
     ))
-    try:
-      current_block = w3.eth.blockNumber
-      print(f"Connected to '{network_name}' at block #{current_block} via {network_provider}")
-    except Exception as ex:
-      print(f"Fatal: connection failed to {network_provider}: {ex}")
-      exit(1)
+    # Inject POA middleware, if necessary
+    if network_provider_poa:
+      w3.middleware_onion.inject(geth_poa_middleware, layer=0)
+      print(f"Injected geth_poa_middleware.")
 
     # If network is Ethereum, and gas price was not specified, try to activate medium_gas_price_strategy: 
     if not isinstance(network_gas_price, int):
