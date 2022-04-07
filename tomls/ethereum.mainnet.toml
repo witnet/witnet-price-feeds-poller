@@ -1,12 +1,8 @@
 [network]
 from = "0x102cB4Da51a9936ba2297be8C930B4Ca658586DA"
-gas = 350_000
-gas_price = 10_000_000_000
 name = "ethereum.mainnet"
+gas = 350_000
 provider = "http://127.0.0.1:9545"
-provider_timeout_secs = 120
 symbol = "ETH"
 tx_waiting_timeout_secs = 900
 tx_polling_latency_secs = 30
-witnet_resolution_secs = 240
-witnet_toolkit_timeout_secs = 15

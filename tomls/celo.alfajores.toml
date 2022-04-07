@@ -1,12 +1,9 @@
 [network]
 from = "0xA0E824822C6A5C28DE3568Df99604d68E9FD9C8c"
 gas = 8_000_000
-gas_price = 500_000_000
 name = "celo.alfajores"
 provider = "http://127.0.0.1:8538"
-provider_timeout_secs = 120
+provider_poa = true
 symbol = "CELO"
 tx_waiting_timeout_secs = 60
-tx_polling_latency_secs = 2
-witnet_resolution_secs = 240
-witnet_toolkit_timeout_secs = 15
+tx_polling_latency_secs = 5
