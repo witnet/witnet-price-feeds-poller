@@ -295,7 +295,6 @@ def log_loop(
                 except Exception as ex:
                   # If dry run fails, assume 0 deviation as to, at least, guarantee the heartbeat periodicity is met
                   print("Dry-run request failed:", ex)
-                  print(contract.functions.bytecode().call().hex())
                   next_price = last_price
                 deviation = round(100 * ((next_price - last_price) / last_price), 2)
                 # If deviation is below threshold...
