@@ -377,7 +377,6 @@ def main(args):
       network_provider,
       request_kwargs={'timeout': network_provider_timeout_secs}
     ))
-    print(f"Web3 client {w3.clientVersion}")
 
     # Inject POA middleware, if necessary
     if network_provider_poa:
@@ -422,6 +421,13 @@ def main(args):
     except Exception as ex:
       print(f"Fatal: connection failed to {network_provider}: {ex}")
       exit(1)
+
+    # Log Web3 client version
+    try:
+      print(f"Web3 client: {w3.clientVersion}")
+    except:
+      print(f"RPC provider does not support web3_clientVersion method.")
+
 
     # Enter infinite loop
     log_loop(
