@@ -160,13 +160,15 @@ def log_loop(
     if pfs_router.address is None:
       print("Fatal: no WitnetPriceRouter address")
       exit(1)
-    print(f"Using WitnetPriceRouter at {pfs_router.address}\n")
+    print(f"\nUsing WitnetPriceRouter at {pfs_router.address}:\n")
     
+    captionMaxLength = 0
     pfs = []    
     for caption in pfs_config['feeds']:
       erc2362id = pfs_router.functions.currencyPairId(caption).call().hex()
       if pfs_router.functions.supportsCurrencyPair(erc2362id).call():
         contract = wpf_contract(w3, pfs_router.functions.getPriceFeed(erc2362id).call())
+        cooldown = pfs_config['feeds'][caption].get("minSecsBetweenUpdates", 3600)
         deviation = pfs_config['feeds'][caption].get("deviationPercentage", 2.0)
         heartbeat = int(pfs_config['feeds'][caption].get("maxSecsBetweenUpdates", 86400))
         lastPrice = int(contract.functions.lastPrice().call())
@@ -183,18 +185,22 @@ def log_loop(
           "lastPrice": lastPrice,
           "lastTimestamp": lastTimestamp,
           "latestRequestId": latestQueryId,
-          "minSecsBetweenUpdates": pfs_config['feeds'][caption].get("minSecsBetweenUpdates", 3600),
+          "cooldown": cooldown,
           "pendingUpdate": pendingUpdate,
           "witnet": witnet
         })
         print(f"{caption}:")
-        print(f"  => Witnet:      {witnet}")
-        print(f"  => Contract:    {contract.address}")        
+        print(f"  => WitnetRequestBoard: {witnet}")
+        print(f"  => WitnetPriceFeed:    {contract.address}")        
         print(f"  => Deviation:   {deviation} %")
         print(f"  => Heartbeat:   {heartbeat} seconds")
-        print(f"  => Last price:  {lastPrice / 10 ** int(caption.split('-')[2])} {pfs_config['feeds'][caption]['label']}")
+        print(f"  => Cooldown:    {cooldown} seconds")
+        print(f"  => Last price : {lastPrice / 10 ** int(caption.split('-')[2])} {pfs_config['feeds'][caption]['label']}")
         print(f"  => Last update: {datetime.datetime.fromtimestamp(lastTimestamp).strftime('%Y-%m-%d %H:%M:%S %Z')}")
-        print(f"  => Latest id:   {latestQueryId} (pending: {pendingUpdate})\n")
+        print(f"  => Latest id  : {latestQueryId} (pending: {pendingUpdate})\n")
+
+        if len(caption) > captionMaxLength:
+          captionMaxLength = len(caption)
 
       else:
         print(f"{caption} => hashed as {erc2362id}, not found in the registry :/\n")
@@ -209,12 +215,14 @@ def log_loop(
       loop_ts = int(time.time())
       for pf in pfs:
         contract = pf["contract"]
+        caption = pf['caption']
+        caption += " " * (captionMaxLength - len(caption))
         # Poll latest update status
         try:
           # Detect eventual pricefeed updates in the router:
           contractAddr = pfs_router.functions.getPriceFeed(pf["id"]).call()
           if contract.address != contractAddr:
-            print(f"{pf['caption']} <> contract route changed from {contract.address} to {contractAddr}")
+            print(f"{caption} <> contract route changed from {contract.address} to {contractAddr}")
             contract = wpf_contract(w3, contractAddr)
             pf["contract"] = contract
             if contractAddr != "0x0000000000000000000000000000000000000000":
@@ -227,7 +235,7 @@ def log_loop(
                 pf["pendingUpdate"] = contract.functions.pendingUpdate().call()
                 pf["witnet"] = contract.functions.witnet().call()
               except Exception as ex:
-                print(f"{pf['caption']} >< unable to read metadata from new contract {contractAddr}: {ex}")
+                print(f"{caption} >< unable to read metadata from new contract {contractAddr}: {ex}")
 
           if contractAddr == "0x0000000000000000000000000000000000000000":
             # Nothing to do if router stopped supporting this pricefeed
@@ -246,21 +254,21 @@ def log_loop(
               pf["lastPrice"] = lastValue[0]
               elapsed_secs = lastValue[1] - pf["lastTimestamp"] 
               pf["lastTimestamp"] = lastValue[1]
-              print(f"{pf['caption']} << drTxHash: {lastValue[2].hex()}, lastPrice: {lastValue[0]} after {elapsed_secs} secs")
+              print(f"{caption} << drTxHash: {lastValue[2].hex()}, lastPrice: {lastValue[0]} after {elapsed_secs} secs")
               
             # An invalid result has just been detected:
             elif status == 400:
               pf["pendingUpdate"] = False
               latestDrTxHash = contract.functions.latestUpdateDrTxHash().call()
               latestError = contract.functions.latestUpdateErrorMessage().call()
-              print(f"{pf['caption']} >< drTxHash: {latestDrTxHash.hex()}, latestError: \"{str(latestError)}\" after {elapsed_secs} secs")
+              print(f"{caption} >< drTxHash: {latestDrTxHash.hex()}, latestError: \"{str(latestError)}\" after {elapsed_secs} secs")
 
             else:
-              print(f"{pf['caption']} .. contract {contract.address} awaits response from {pf['witnet']}::{pf['latestRequestId']}")
+              print(f"{caption} .. contract {contract.address} awaits response from {pf['witnet']}::{pf['latestRequestId']}")
               
           # If no update is pending...
           else :
-            if elapsed_secs >= pf["minSecsBetweenUpdates"] - network_witnet_resolution_secs:
+            if elapsed_secs >= pf["cooldown"] - network_witnet_resolution_secs:
               last_price = pf["lastPrice"]
               deviation = 0
               if last_price > 0:
@@ -275,15 +283,14 @@ def log_loop(
                 deviation = round(100 * ((next_price - last_price) / last_price), 2)
                 # If deviation is below threshold...
                 if abs(deviation) < pf["deviation"] and elapsed_secs < (pf["heartbeat"] - network_witnet_resolution_secs):
-                  print(f"{pf['caption']} .. {deviation} % deviation after {elapsed_secs} secs since last update")
+                  print(f"{caption} .. {deviation} % deviation after {elapsed_secs} secs since last update")
                   # ...skip request update until, at least, another `loop_interval_secs` secs
                   continue
               # Post new update request
               reason = f"deviation is greater than {pf['deviation']} %"
               if (elapsed_secs >= pf['heartbeat'] - network_witnet_resolution_secs):
-                reason = "of heartbeat and Witnet latency"
-              print(f"{pf['caption']} >> Requesting update after {elapsed_secs} seconds because {reason}:")
-              latestRequestId = handle_requestUpdate(
+                reason = f"of heartbeat and Witnet latency"
+              print(f"{caption} >> Requesting update after {elapsed_secs} seconds because {reason}:")
                 w3,
                 csv_filename,
                 pfs_router,
@@ -300,9 +307,9 @@ def log_loop(
                 pf["latestRequestId"] = latestRequestId
 
             else:
-              secs_until_next_check = pf['minSecsBetweenUpdates'] - elapsed_secs - network_witnet_resolution_secs
+              secs_until_next_check = pf['cooldown'] - elapsed_secs - network_witnet_resolution_secs
               if secs_until_next_check > 0:
-                print(f"{pf['caption']} .. resting for another {secs_until_next_check} secs before next deviation check")
+                print(f"{caption} .. resting for another {secs_until_next_check} secs before next deviation check")
         
         # Capture exceptions while reading state from contract
         except Exception as ex:
@@ -377,6 +384,15 @@ def main(args):
         exit(1)
     else:    
       print(f"Gas price strategy: invariant ({'{:,}'.format(network_gas_price)})")
+
+    # Connect to the Web3 provider
+    try:
+      current_block = w3.eth.blockNumber
+      print(f"Connected to '{network_name}' at block #{current_block} via {network_provider}")      
+
+    except Exception as ex:
+      print(f"Fatal: connection failed to {network_provider}: {ex}")
+      exit(1)
 
     # Enter infinite loop
     log_loop(
