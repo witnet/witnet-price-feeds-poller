@@ -9,8 +9,11 @@ import time
 
 from configs import load_network_config, load_price_feeds_config, load_version
 from contracts import wpr_contract, wpf_contract
-from threading import Timer
+from io import StringIO
 from web3 import Web3, exceptions
+from web3.gas_strategies.rpc import rpc_gas_price_strategy
+from web3.logs import DISCARD
+from web3.middleware import geth_poa_middleware
 
 # Post a data request to the post_dr method of the WRB contract
 def handle_requestUpdate(
