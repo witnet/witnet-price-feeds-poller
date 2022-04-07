@@ -345,11 +345,13 @@ def main(args):
       print(f"Fatal: no configuration for network '{network_name}'")
       exit(1)
     
-    # Open web3 provider from the arguments provided:
+    # Create Web3 object
     w3 = Web3(Web3.HTTPProvider(
       network_provider,
       request_kwargs={'timeout': network_provider_timeout_secs}
     ))
+    print(f"Web3 client {w3.clientVersion}")
+
     # Inject POA middleware, if necessary
     if network_provider_poa:
       w3.middleware_onion.inject(geth_poa_middleware, layer=0)
