@@ -109,7 +109,7 @@ def log_master_balance(csv_filename, addr, balance, txhash):
         readable_ts = datetime.datetime.fromtimestamp(int(time.time())).strftime('%Y-%m-%d %H:%M:%S %Z')
         row = f"\"{os.path.splitext(os.path.basename(csv_filename))[0]}\";\"{addr}\";\"{readable_ts}\";\"{balance}\";\"{txhash}\""
         csv_file.write(row + '\n')
-    except:
+    except Exception as ex:
       return
 
 def log_exception_state(addr, reason):
@@ -424,9 +424,8 @@ def main(args):
     # Log Web3 client version
     try:
       print(f"Web3 client: {w3.clientVersion}")
-    except:
+    except Exception as ex:
       print(f"RPC provider does not support web3_clientVersion method.")
-
 
     # Enter infinite loop
     log_loop(
