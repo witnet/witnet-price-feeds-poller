@@ -11,7 +11,6 @@ from configs import load_network_config, load_price_feeds_config, load_version
 from contracts import wpr_contract, wpf_contract
 from io import StringIO
 from web3 import Web3, exceptions
-from web3.gas_strategies.rpc import rpc_gas_price_strategy
 from web3.logs import DISCARD
 from web3.middleware import geth_poa_middleware
 
@@ -382,33 +381,42 @@ def main(args):
       w3.middleware_onion.inject(geth_poa_middleware, layer=0)
       print(f"Injected geth_poa_middleware.")
 
-    # If network is Ethereum, and gas price was not specified, try to activate medium_gas_price_strategy: 
     if not isinstance(network_gas_price, int):
-      if network_gas_price == "estimate_medium":
-        from web3 import middleware
-        from web3.gas_strategies.time_based import medium_gas_price_strategy
-
-        # Transaction mined within 5 minutes
-        w3.eth.setGasPriceStrategy(medium_gas_price_strategy)
-
-        # Setup cache because get price is slow (it needs 120 blocks)
-        w3.middleware_onion.add(middleware.time_based_cache_middleware)
-        w3.middleware_onion.add(middleware.latest_block_based_cache_middleware)
-        w3.middleware_onion.add(middleware.simple_cache_middleware)
-
-        network_gas_price = None
-        print("Gas price strategy: estimate_medium")
+      # Apply appropiate gas price strategy if no integer value is specified in `gas_price`
       
+      # If network is Ethereum mainnet, and "estimate_medium" is specied as `gas_price`, try to activate `medium_gas_price_strategy`
+      if network_gas_price == "estimate_medium":        
+        if w3.eth.chainId == 1:
+          from web3 import middleware
+          from web3.gas_strategies.time_based import medium_gas_price_strategy
+
+          # Transaction mined within 5 minutes
+          w3.eth.setGasPriceStrategy(medium_gas_price_strategy)
+
+          # Setup cache because get price is slow (it needs 120 blocks)
+          w3.middleware_onion.add(middleware.time_based_cache_middleware)
+          w3.middleware_onion.add(middleware.latest_block_based_cache_middleware)
+          w3.middleware_onion.add(middleware.simple_cache_middleware)
+
+          network_gas_price = None
+          print("Gas price strategy: estimate_medium")
+    
+        else:          
+          # "estimate_medium" strategy not supported in networks other than Ethereum mainnet
+          print(f"Invalid gas price: {network_gas_price}. \"estimate_medium\" can only be used for mainnet (current id: {w3.eth.chainId})")
+          exit(1)
+      
+      # If no `gas_price` value is specified at all, try to activate general RPC gas price strategy:
       elif network_gas_price is None:
+        from web3.gas_strategies.rpc import rpc_gas_price_strategy
         w3.eth.set_gas_price_strategy(rpc_gas_price_strategy)
         print("Gas price strategy: eth_gasPrice")
-      
+
+      # Exit if anything other text is specified in `gas_price`,   
       else:
-        if network_gas_price == "estimate_medium" and w3.eth.chainId != 1:
-         print(f"Invalid gas price: {network_gas_price}. \"estimate_medium\" can only be used for mainnet (current id: {w3.eth.chainId})")
-        else:
-          print(f"Invalid gas price: {network_gas_price}.")
+        print(f"Invalid gas price: {network_gas_price}.")
         exit(1)
+
     else:    
       print(f"Gas price strategy: invariant ({'{:,}'.format(network_gas_price)})")
 
