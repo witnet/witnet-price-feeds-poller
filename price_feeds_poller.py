@@ -272,9 +272,21 @@ def log_loop(
       return
 
     print(f"Ok, so let's poll every {loop_interval_secs} seconds...")
+    low_balance_ts = int(time.time()) - 900
     while True:
       print()
       loop_ts = int(time.time())
+      
+      balance = w3.eth.getBalance(network_from)
+      time_left_secs = time_to_die_secs(balance, pfs)
+      if time_left_secs > 0:
+        if time_left_secs <= 86400 * 3 and (loop_ts - low_balance_ts) >= 900:
+          # start warning every 900 seconds if estimated time before draiing funds is less than 3 days
+          low_balance_ts = loop_ts
+          print(f"LOW FUNDS !!!: estimated {round(time_left_secs / 3600, 2)} hours before running out of funds")
+        else:
+          print(f"Time-To-Die: {round(time_left_secs / 3600, 2)} hours")
+
       for pf in pfs:
         
         contract = pf["contract"]
