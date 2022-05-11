@@ -155,6 +155,37 @@ def dry_run_request(bytecode, timeout_secs):
       raise Exception(f"Timeout while trying data request ({timeout_secs} secs)")
     return int(output.read())
 
+def avg_fees(pfs):
+  total_fees = 0
+  total_records = 0
+  for pf in pfs:
+    if len(pf["fees"]) > 0:
+      total_fees += sum(pf["fees"])
+      total_records += len(pf["fees"])
+  if total_records > 0:
+    return total_fees / total_records
+  else:
+    return 0
+
+def time_to_die_secs(balance, pfs):
+  total_speed = 0
+  total_avg_fee = avg_fees(pfs)
+  for pf in pfs:
+    if len(pf["secs"]) > 0:
+      pf_secs = sum(pf["secs"]) / len(pf["secs"])
+    else:
+      pf_secs = pf["heartbeat"]    
+    if pf_secs > 0:
+      if len(pf["fees"]) > 0:    
+        pf_fee = sum(pf["fees"]) / len(pf["fees"])
+      else:
+        pf_fee = total_avg_fee
+      total_speed += (pf_fee / pf_secs)
+  if total_speed > 0:
+    return balance / total_speed
+  else:
+    return 0
+
 def log_loop(
     w3,
     loop_interval_secs,
@@ -209,9 +240,12 @@ def log_loop(
             "witnet": witnet,
             "reverts": 0,
             "auto_disabled": False,
+            "lastRevertedTx": "",
+            "fees": [],
+            "secs": []
+          })
+          
           print(f"  => WitnetRequestBoard: {witnet}")
-          print(f"  => WitnetPriceFeed:    {contract.address}")
-        print(f"  => WitnetPriceFeed:    {contract.address}")        
           print(f"  => WitnetPriceFeed:    {contract.address}")
           if heartbeat > 0:
             print(f"  => Heartbeat   : {heartbeat} seconds")
@@ -242,6 +276,7 @@ def log_loop(
       print()
       loop_ts = int(time.time())
       for pf in pfs:
+        
         contract = pf["contract"]
         caption = pf['caption']
         caption += " " * (captionMaxLength - len(caption))
@@ -268,8 +303,9 @@ def log_loop(
                 pf["latestQueryId"] = contract.functions.latestQueryId().call()
                 pf["pendingUpdate"] = contract.functions.pendingUpdate().call()
                 pf["reverts"] = 0
-                pf["witnet"] = contract.functions.witnet().call()
-                
+                pf["fees"].clear()
+                pf["secs"].clear()
+
               except Exception as ex:
                 print(f"{caption} >< unable to read metadata from new contract {contractAddr}: {ex}")
 
@@ -390,6 +426,16 @@ def log_loop(
 
               # on fully successfull update request:
               if len(result) >= 3:                
+
+                # update fees and secs history
+                latestFee = result[2]
+                if latestFee > 0:
+                  pf["fees"].append(latestFee)
+                  if len(pf["fees"]) > 3:
+                    del pf["fees"][0]
+                pf["secs"].append(elapsed_secs)                
+                if len(pf["secs"]) > 3:
+                  del pf["secs"][0]
 
                 # and in case of routed priced, update lastTimestamp immediately
                 if latestRequestId == 0 and pf["isRouted"]:
