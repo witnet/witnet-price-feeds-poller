@@ -190,7 +190,8 @@ def log_loop(
     w3,
     loop_interval_secs,
     csv_filename,
-    pfs_config,
+    pfs_config_file_path,
+    network_name,
     network_symbol,
     network_from,
     network_gas,
@@ -201,6 +202,7 @@ def log_loop(
     network_witnet_resolution_secs,
     network_witnet_toolkit_timeout_secs
   ):
+    pfs_config = load_price_feeds_config(pfs_config_file_path, network_name)
     pfs_router = wpr_contract(w3, pfs_config['address'])
     if pfs_router.address is None:
       print("Fatal: no WitnetPriceRouter address")
@@ -297,6 +299,7 @@ def log_loop(
           # Detect eventual pricefeed updates in the router:
           contractAddr = pfs_router.functions.getPriceFeed(pf["id"]).call()
           if contract.address != contractAddr:
+            pfs_config = load_price_feeds_config(pfs_config_file_path, network_name)
             print(f"{caption} <> contract route changed from {contract.address} to {contractAddr}")
             contract = wpf_contract(w3, contractAddr)
             pf["contract"] = contract
@@ -490,8 +493,7 @@ def main(args):
     network_witnet_toolkit_timeout_secs = network_config["network"].get("witnet_toolkit_timeout_secs", 15)
 
     # Read pricefeeds parameters from configuration file:
-    pfs_config = load_price_feeds_config(args.json_file, network_name)
-    if pfs_config is None:
+    if load_price_feeds_config(args.json_file, network_name) is None:
       print(f"Fatal: no configuration for network '{network_name}'")
       exit(1)
     
@@ -565,7 +567,8 @@ def main(args):
       w3,
       args.loop_interval_secs,
       args.csv_file,
-      pfs_config,
+      args.json_file,
+      network_name,
       network_symbol,
       network_from,
       network_gas,
