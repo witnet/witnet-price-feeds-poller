@@ -479,7 +479,39 @@
               "maxSecsBetweenUpdates": 86400,
               "minSecsBetweenUpdates": 900
             },
+            "Price-GLINT/USD-6": {
+              "isRouted": true,
+              "label": "$",
+              "maxSecsBetweenUpdates": 86400,
+              "minSecsBetweenUpdates": 900
+            },
+            "Price-GLINT/USDC-6": {
+              "label": "₮",
+              "deviationPercentage": 1.0,
+              "maxSecsBetweenUpdates": 86400,
+              "minSecsBetweenUpdates": 900
+            },
+            "Price-GLINT/USDT-6": {
+              "label": "₮",
+              "deviationPercentage": 1.0,
+              "maxSecsBetweenUpdates": 86400,
+              "minSecsBetweenUpdates": 600
+            },
+            "Price-GLMR/USD-6": {
+              "isRouted": true,
+              "label": "$"
+            },
             "Price-GLMR/USDT-6": {
+              "label": "₮",
+              "deviationPercentage": 1.0,
+              "maxSecsBetweenUpdates": 86400,
+              "minSecsBetweenUpdates": 900
+            },
+            "Price-STELLA/USD-6": {
+              "isRouted": true,
+              "label": "$"
+            },
+            "Price-STELLA/USDT-6": {
               "label": "₮",
               "deviationPercentage": 1.0,
               "maxSecsBetweenUpdates": 86400,
@@ -488,7 +520,13 @@
             "Price-USDT/USD-6": {
               "label": "$",
               "deviationPercentage": 0.1,
-              "maxSecsBetweenUpdates": 300,
+              "maxSecsBetweenUpdates": 86400,
+              "minSecsBetweenUpdates": 900
+            },
+            "Price-USDC/USD-6": {
+              "label": "$",
+              "deviationPercentage": 0.1,
+              "maxSecsBetweenUpdates": 86400,
               "minSecsBetweenUpdates": 900
             }
           }
