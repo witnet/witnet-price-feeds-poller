@@ -446,10 +446,10 @@ def log_loop(
                 latestFee = result[2]
                 if latestFee > 0:
                   pf["fees"].append(latestFee)
-                  if len(pf["fees"]) > 3:
+                  if len(pf["fees"]) > 16:
                     del pf["fees"][0]
                 pf["secs"].append(elapsed_secs)                
-                if len(pf["secs"]) > 3:
+                if len(pf["secs"]) > 256:
                   del pf["secs"][0]
 
                 # and in case of routed priced, update lastTimestamp immediately
