@@ -102,13 +102,16 @@ def handle_requestUpdate(
     if receipt['status'] == False:
       print(f"   $$ Transaction reverted !!")
       return [ -1, tx.hex() ]
-    else:      
-      logs = contract.events.PriceFeeding().processReceipt(receipt, errors=DISCARD)
+    else:
       requestId = 0
-      if len(logs) > 0:
-        requestId = logs[0].args.queryId
+      try:
+        logs = contract.events.PriceFeeding().processReceipt(receipt, errors=DISCARD)
+        if len(logs) > 0:
+          requestId = logs[0].args.queryId
+      except Exception as ex:
+        requestId = contract.functions.latestQueryId().call()
       if requestId > 0:
-        print(f" <<<< Request id : {requestId}")      
+        print(f" <<<< Request id : {requestId}")
       return [ requestId, tx.hex(), total_fee ]
 
 def log_master_balance(csv_filename, addr, balance, txhash):
@@ -453,7 +456,7 @@ def log_loop(
                   del pf["secs"][0]
 
                 # and in case of routed priced, update lastTimestamp immediately
-                if latestRequestId == 0 and pf["isRouted"]:
+                if pf["isRouted"]:
                   lastValue = contract.functions.lastValue().call()
                   pf["lastTimestamp"] = lastValue[1]
                   print(f" <<<< lastPrice was {lastValue[0]}, {int(time.time()) - lastValue[1]} secs ago")
