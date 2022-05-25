@@ -25,8 +25,8 @@ def handle_requestUpdate(
     network_from,
     network_gas,
     network_gas_price,
-    network_tx_waiting_timeout_secs,
-    network_tx_polling_latency_secs
+    network_evm_waiting_timeout_secs,
+    network_evm_polling_latency_secs
   ):
 
     try:
@@ -80,10 +80,10 @@ def handle_requestUpdate(
       print(f" ~ Tx. hash      : {tx.hex()}")      
 
       # Wait for tx receipt and print relevant tx info upon reception
-      receipt = w3.eth.waitForTransactionReceipt(
+      receipt = w3.eth.wait_for_transaction_receipt(
         tx,
-        network_tx_waiting_timeout_secs,
-        network_tx_polling_latency_secs
+        network_evm_waiting_timeout_secs,
+        network_evm_polling_latency_secs
       )
       total_fee = balance - w3.eth.getBalance(network_from)
       print( " > Tx. block num.:", "{:,}".format(receipt.get("blockNumber")))
@@ -199,9 +199,9 @@ def log_loop(
     network_from,
     network_gas,
     network_gas_price,
-    network_max_reverts,
-    network_tx_waiting_timeout_secs,
-    network_tx_polling_latency_secs,
+    network_evm_max_reverts,
+    network_evm_waiting_timeout_secs,
+    network_evm_polling_latency_secs,
     network_witnet_resolution_secs,
     network_witnet_toolkit_timeout_secs
   ):
@@ -427,8 +427,8 @@ def log_loop(
                 network_from,
                 network_gas,
                 network_gas_price,
-                network_tx_waiting_timeout_secs,
-                network_tx_polling_latency_secs
+                network_evm_waiting_timeout_secs,
+                network_evm_polling_latency_secs
               )
               latestRequestId = result[0]
               if latestRequestId > 0:
@@ -439,7 +439,7 @@ def log_loop(
               elif latestRequestId < 0:
                 pf["lastRevertedTx"] = result[1]
                 pf["reverts"] = pf["reverts"] + 1
-                if pf["reverts"] >= network_max_reverts:
+                if pf["reverts"] >= network_evm_max_reverts:
                   pf["auto_disabled"] = True
 
               # on fully successfull update request:
@@ -489,10 +489,10 @@ def main(args):
     network_from = network_config["network"]["from"]
     network_gas = network_config["network"].get("gas")
     network_gas_price = network_config["network"].get("gas_price")
-    network_max_reverts = network_config["network"].get("max_reverts", 3)
-    network_tx_waiting_timeout_secs = network_config["network"].get("tx_waiting_timeout_secs", 130)
-    network_tx_polling_latency_secs = network_config["network"].get("tx_polling_latency_secs", 13)
-    network_witnet_resolution_secs = network_config["network"].get("dr_resolution_latency_secs", 300)
+    network_evm_max_reverts = network_config["network"].get("evm_max_reverts", 3)
+    network_evm_waiting_timeout_secs = network_config["network"].get("evm_waiting_timeout_secs", 130)
+    network_evm_polling_latency_secs = network_config["network"].get("evm_polling_latency_secs", 13)
+    network_witnet_resolution_secs = network_config["network"].get("witnet_resolution_latency_secs", 300)
     network_witnet_toolkit_timeout_secs = network_config["network"].get("witnet_toolkit_timeout_secs", 15)
 
     # Read pricefeeds parameters from configuration file:
@@ -576,9 +576,9 @@ def main(args):
       network_from,
       network_gas,
       network_gas_price,      
-      network_max_reverts,
-      network_tx_waiting_timeout_secs,
-      network_tx_polling_latency_secs,
+      network_evm_max_reverts,
+      network_evm_waiting_timeout_secs,
+      network_evm_polling_latency_secs,
       network_witnet_resolution_secs,
       network_witnet_toolkit_timeout_secs
     )
