@@ -5,6 +5,7 @@ gas = 350_000
 provider = "http://127.0.0.1:8544"
 provider_poa = true
 symbol = "rETH"
-tx_waiting_timeout_secs = 200
-tx_polling_latency_secs = 20
+evm_finalization_secs = 90
+evm_waiting_timeout_secs = 200
+evm_polling_latency_secs = 20
 
