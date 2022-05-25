@@ -500,7 +500,7 @@ def main(args):
     network_from = network_config["network"]["from"]
     network_gas = network_config["network"].get("gas")
     network_gas_price = network_config["network"].get("gas_price")
-    network_evm_finalization_secs = network_config["network"].get("evm_finalization_secs", 100)
+    network_evm_finalization_secs = network_config["network"].get("evm_finalization_secs", 60)
     network_evm_max_reverts = network_config["network"].get("evm_max_reverts", 3)
     network_evm_waiting_timeout_secs = network_config["network"].get("evm_waiting_timeout_secs", 130)
     network_evm_polling_latency_secs = network_config["network"].get("evm_polling_latency_secs", 13)
