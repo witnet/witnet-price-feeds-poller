@@ -354,8 +354,8 @@ def log_loop(
           # If still waiting for an update...
           if pf["pendingUpdate"] == True:
           
-            # A valid result has just been detected:
-            if status == 200:
+            # A new valid result has just been detected:
+            if status == 200 and lastValue[1] > pf["lastTimestamp"]:
               pf["pendingUpdate"] = False
               pf["lastPrice"] = lastValue[0]
               elapsed_secs = lastValue[1] - pf["lastTimestamp"] 
