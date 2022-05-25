@@ -104,15 +104,14 @@ def handle_requestUpdate(
       return [ -1, tx.hex() ]
     else:
       requestId = 0
-      try:
+      if len(receipt['logs']) > 0:
         logs = contract.events.PriceFeeding().processReceipt(receipt, errors=DISCARD)
-        if len(logs) > 0:
-          requestId = logs[0].args.queryId
-      except Exception as ex:
-        requestId = contract.functions.latestQueryId().call()
-      if requestId > 0:
-        print(f" <<<< Request id : {requestId}")
-      return [ requestId, tx.hex(), total_fee ]
+        requestId = logs[0].args.queryId
+        if requestId > 0:
+          print(f" <<<< Request id : {requestId}")
+        else:
+          print(f" <<<< Synchronous update.")
+        return [ requestId, tx.hex(), total_fee ]
 
 def log_master_balance(csv_filename, addr, balance, txhash):
   if csv_filename is not None:
