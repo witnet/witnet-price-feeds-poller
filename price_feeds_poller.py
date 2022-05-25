@@ -21,6 +21,7 @@ def handle_requestUpdate(
     router,
     contract,
     isRouted,
+    latestRequestId,
     network_symbol,    
     network_from,
     network_gas,
@@ -98,6 +99,8 @@ def handle_requestUpdate(
       print(f"   xx Transaction rejected: {ex}")
       return [ 0 ]
 
+    #print(f" > Tx. receipt   :", receipt)
+    
     # Check if transaction was succesful
     if receipt['status'] == False:
       print(f"   $$ Transaction reverted !!")
@@ -112,6 +115,9 @@ def handle_requestUpdate(
         else:
           print(f" <<<< Synchronous update.")
         return [ requestId, tx.hex(), total_fee ]
+      else:
+        print(f" <<<< Request id : {latestRequestId} (nothing to update)")
+        return [ latestRequestId, tx.hex(), total_fee ]
 
 def log_master_balance(csv_filename, addr, balance, txhash):
   if csv_filename is not None:
@@ -297,6 +303,10 @@ def log_loop(
         contract = pf["contract"]
         caption = pf['caption']
         caption += " " * (captionMaxLength - len(caption))
+
+        # print(f"{caption} => fees => {pf['fees']}")
+        # print(f"{caption} => secs => {pf['secs']}")
+        
         # Poll latest update status
         try:
           # Detect eventual pricefeed updates in the router:
@@ -423,6 +433,7 @@ def log_loop(
                 pfs_router,
                 contract,
                 pf['isRouted'],
+                pf['latestRequestId'],
                 network_symbol,
                 network_from,
                 network_gas,
