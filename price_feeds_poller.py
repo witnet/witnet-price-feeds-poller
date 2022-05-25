@@ -98,17 +98,15 @@ def handle_requestUpdate(
     except Exception as ex:
       print(f"   xx Transaction rejected: {ex}")
       return [ 0 ]
-
-    #print(f" > Tx. receipt   :", receipt)
-    
+   
     # Check if transaction was succesful
     if receipt['status'] == False:
       print(f"   $$ Transaction reverted !!")
       return [ -1, tx.hex() ]
     else:
       requestId = 0
-      if len(receipt['logs']) > 0:
-        logs = contract.events.PriceFeeding().processReceipt(receipt, errors=DISCARD)
+      logs = contract.events.PriceFeeding().processReceipt(receipt, errors=DISCARD)
+      if len(logs) > 0:        
         requestId = logs[0].args.queryId
         if requestId > 0:
           print(f" <<<< Request id : {requestId}")
@@ -284,6 +282,7 @@ def log_loop(
 
     print(f"Ok, so let's poll every {loop_interval_secs} seconds...")
     low_balance_ts = int(time.time()) - 900
+    total_finalization_secs = network_evm_finalization_secs + network_witnet_resolution_secs
     while True:
       print()
       loop_ts = int(time.time())
@@ -303,9 +302,6 @@ def log_loop(
         contract = pf["contract"]
         caption = pf['caption']
         caption += " " * (captionMaxLength - len(caption))
-
-        # print(f"{caption} => fees => {pf['fees']}")
-        # print(f"{caption} => secs => {pf['secs']}")
         
         # Poll latest update status
         try:
@@ -375,7 +371,7 @@ def log_loop(
           # If no update is pending:
           else :
             
-            if elapsed_secs >= pf["cooldown"] - network_witnet_resolution_secs - network_evm_finalization_secs:
+            if elapsed_secs >= pf["cooldown"] - total_finalization_secs:
               last_price = pf["lastPrice"]
               deviation = 0
 
@@ -389,7 +385,7 @@ def log_loop(
                   print(f"{caption} .. no routed update detected on contract {contract.address}")
                 continue
 
-              elif elapsed_secs >= pf["heartbeat"] -(network_witnet_resolution_secs + network_evm_finalization_secs) * (1 - pf["isRouted"]):
+              elif elapsed_secs >= pf["heartbeat"] - (0 if pf["isRouted"] else total_finalization_secs):
                 # Otherwise, check heartbeat condition, first:
                 reason = f"of heartbeat and Witnet latency"
 
@@ -473,7 +469,7 @@ def log_loop(
                   print(f" <<<< lastPrice was {lastValue[0]}, {int(time.time()) - lastValue[1]} secs ago")
 
             else:
-              secs_until_next_check = pf['cooldown'] - elapsed_secs - network_witnet_resolution_secs - network_evm_finalization_secs
+              secs_until_next_check = pf['cooldown'] - elapsed_secs - total_finalization_secs
               if secs_until_next_check > 0:
                 print(f"{caption} .. resting for another {secs_until_next_check} secs before next triggering check")
         
