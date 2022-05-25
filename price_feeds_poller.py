@@ -199,6 +199,7 @@ def log_loop(
     network_from,
     network_gas,
     network_gas_price,
+    network_evm_finalization_secs,
     network_evm_max_reverts,
     network_evm_waiting_timeout_secs,
     network_evm_polling_latency_secs,
@@ -365,7 +366,7 @@ def log_loop(
           # If no update is pending:
           else :
             
-            if elapsed_secs >= pf["cooldown"] - network_witnet_resolution_secs:
+            if elapsed_secs >= pf["cooldown"] - network_witnet_resolution_secs - network_evm_finalization_secs:
               last_price = pf["lastPrice"]
               deviation = 0
 
@@ -379,7 +380,7 @@ def log_loop(
                   print(f"{caption} .. no routed update detected on contract {contract.address}")
                 continue
 
-              elif elapsed_secs >= pf["heartbeat"] - network_witnet_resolution_secs * (1 - pf["isRouted"]):
+              elif elapsed_secs >= pf["heartbeat"] -(network_witnet_resolution_secs + network_evm_finalization_secs) * (1 - pf["isRouted"]):
                 # Otherwise, check heartbeat condition, first:
                 reason = f"of heartbeat and Witnet latency"
 
@@ -462,7 +463,7 @@ def log_loop(
                   print(f" <<<< lastPrice was {lastValue[0]}, {int(time.time()) - lastValue[1]} secs ago")
 
             else:
-              secs_until_next_check = pf['cooldown'] - elapsed_secs - network_witnet_resolution_secs
+              secs_until_next_check = pf['cooldown'] - elapsed_secs - network_witnet_resolution_secs - network_evm_finalization_secs
               if secs_until_next_check > 0:
                 print(f"{caption} .. resting for another {secs_until_next_check} secs before next triggering check")
         
@@ -489,6 +490,7 @@ def main(args):
     network_from = network_config["network"]["from"]
     network_gas = network_config["network"].get("gas")
     network_gas_price = network_config["network"].get("gas_price")
+    network_evm_finalization_secs = network_config["network"].get("evm_finalization_secs", 100)
     network_evm_max_reverts = network_config["network"].get("evm_max_reverts", 3)
     network_evm_waiting_timeout_secs = network_config["network"].get("evm_waiting_timeout_secs", 130)
     network_evm_polling_latency_secs = network_config["network"].get("evm_polling_latency_secs", 13)
@@ -576,6 +578,7 @@ def main(args):
       network_from,
       network_gas,
       network_gas_price,      
+      network_evm_finalization_secs,
       network_evm_max_reverts,
       network_evm_waiting_timeout_secs,
       network_evm_polling_latency_secs,
