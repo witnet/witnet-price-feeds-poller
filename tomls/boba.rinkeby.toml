@@ -5,6 +5,6 @@ name = "boba.rinkeby"
 provider = "http://127.0.0.1:8539"
 provider_poa = true
 symbol = "oETH"
-evm_waiting_timeout_secs = 60
+evm_finalization_secs = 90
 evm_waiting_timeout_secs = 60
 evm_polling_latency_secs = 10

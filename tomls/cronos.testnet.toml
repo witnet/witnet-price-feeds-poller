@@ -4,6 +4,6 @@ name = "cronos.testnet"
 provider = "http://127.0.0.1:8530"
 #provider_poa = true
 symbol = "tCRO"
-evm_finalization_secs = 30
+evm_finalization_secs = 36
 evm_waiting_timeout_secs = 120
 evm_polling_latency_secs = 5

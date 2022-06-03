@@ -4,7 +4,6 @@ name = "metis.rinkeby"
 provider = "http://localhost:8536"
 provider_poa = true
 symbol = "tMETIS"
-evm_finalization_secs = 120
+evm_finalization_secs = 48
 evm_waiting_timeout_secs = 60
 evm_polling_latency_secs = 6
-
