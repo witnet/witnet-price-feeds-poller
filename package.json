@@ -1,6 +1,6 @@
 {
   "name": "witnet-price-feeds-poller",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "",
   "main": "",
   "repository": "https://github.com/witnet/witnet-price-feeds-poller",
@@ -8,7 +8,7 @@
   "private": false,
   "scripts": {},
   "dependencies": {
-    "witnet-requests": "~0.7.3"
+    "witnet-requests": "~0.8.1"
   },
   "devDependencies": {
     "@babel/cli": "^7.5.5",
