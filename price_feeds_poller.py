@@ -398,8 +398,8 @@ def log_loop(
                   )
                 except Exception as ex:
                   # ...if dry run fails, assume 0 deviation as to, at least, guarantee the heartbeat periodicity is met
-                  print("Dry-run request failed:", ex)
-                  next_price = last_price                
+                  print(f"{caption} >< Dry-run failed:", ex)
+                  continue
                 deviation = round(100 * ((next_price - last_price) / last_price), 2)
                 
                 # If deviation is below threshold...
