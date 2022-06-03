@@ -31,13 +31,13 @@ def handle_requestUpdate(
   ):
 
     try:
-      print(f" - WitnetPriceFeed     : {contract.address}")
-      print(f" - WitnetPriceRouter   : {router.address}")      
+      print(f" - Price feed    : {contract.address}")
+      print(f" - Price router  : {router.address}")      
       if isRouted == False:
-        print(f" - WitnetRequestBoard  : {contract.functions.witnet().call()}")
-        print(f" - Witnet request hash : {contract.functions.hash().call().hex()}")
+        print(f" - Witnet address: {contract.functions.witnet().call()}")
+        print(f" - Request hash  : {contract.functions.hash().call().hex()}")
       else:
-        print(f" - Routed pairs        : ({contract.functions.getPairsCount().call()})")
+        print(f" - Routed pairs  : ({contract.functions.getPairsCount().call()})")
 
       # Check that the account has enough balance
       balance = w3.eth.getBalance(network_from)
@@ -114,7 +114,7 @@ def handle_requestUpdate(
           print(f" <<<< Synchronous update.")
         return [ requestId, tx.hex(), total_fee ]
       else:
-        print(f" <<<< Request id : {latestRequestId} (nothing to update)")
+        print(f" ==== Previous request id : {latestRequestId} (nothing to update)")
         return [ latestRequestId, tx.hex(), total_fee ]
 
 def log_master_balance(csv_filename, addr, balance, txhash):
@@ -254,8 +254,8 @@ def log_loop(
             "secs": []
           })
           
-          print(f"  => WitnetRequestBoard: {witnet}")
-          print(f"  => WitnetPriceFeed:    {contract.address}")
+          print(f"  => Witnet address : {witnet}")
+          print(f"  => Price feed     : {contract.address}")
           if heartbeat > 0:
             print(f"  => Heartbeat   : {heartbeat} seconds")
           if cooldown > 0:
