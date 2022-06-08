@@ -504,9 +504,10 @@ def main(args):
     network_witnet_toolkit_timeout_secs = network_config["network"].get("witnet_toolkit_timeout_secs", 15)
 
     # Print timers set-up:
+    print(f"Polling period: {'{:,}'.format(args.loop_interval_secs)}\"")
     print(f"EVM finalization time: {'{:,}'.format(network_evm_finalization_secs)}\"")
     print(f"Witnet resolution time: {'{:,}'.format(network_witnet_resolution_secs)}\"")
-    print(f"Witnet tookit timeout: {'{:,}'.format(network_witnet_toolkit_timeout_secs)}\"")
+    print(f"Witnet toolkit timeout: {'{:,}'.format(network_witnet_toolkit_timeout_secs)}\"")
 
     # Read pricefeeds parameters from configuration file:
     if load_price_feeds_config(args.json_file, network_name) is None:
