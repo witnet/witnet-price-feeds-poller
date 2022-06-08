@@ -115,7 +115,7 @@
     "celo": {
       "networks": {
         "celo.alfajores": {
-          "address": "0xAE72827b810b263040548Ef543C30DF1c7F5eC78",
+          "address": "0x6f8A7E2bBc1eDb8782145cD1089251f6e2C738AE",
           "blockExplorer": "https://alfajores-blockscout.celo-testnet.org/address/{address}",
           "color": "#1cd8d2",
           "name": "Celo Alfajores",
@@ -130,13 +130,13 @@
             "Price-CELO/EUR-6": {
               "label": "€",
               "deviationPercentage": 1.0,
-              "maxSecsBetweenUpdates": 3600,
+              "maxSecsBetweenUpdates": 300,
               "minSecsBetweenUpdates": 300
             },
             "Price-CELO/USD-6": {
               "label": "$",
               "deviationPercentage": 1.0,
-              "maxSecsBetweenUpdates": 3600,
+              "maxSecsBetweenUpdates": 300,
               "minSecsBetweenUpdates": 300
             },
             "Price-ETH/USD-6": {
