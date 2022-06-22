@@ -234,6 +234,9 @@ def log_loop(
           if routed == False:
             pendingUpdate = contract.functions.pendingUpdate().call()
             witnet = contract.functions.witnet().call()
+          else:
+            pendingUpdate = False
+            witnet = None
           pfs.append({
             "id": erc2362id,
             "caption": caption,
