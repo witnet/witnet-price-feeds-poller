@@ -7,7 +7,7 @@ import subprocess
 import sys
 import time
 
-from configs import load_network_config, load_price_feeds_config, load_version
+from configs import load_price_feeds_config, load_version
 from contracts import wpr_contract, wpf_contract
 from dotenv import load_dotenv
 from io import StringIO
@@ -517,9 +517,13 @@ def main(args):
     print(f"Witnet resolution time: {'{:,}'.format(witnet_resolution_secs)}\"")
     print(f"Witnet toolkit timeout: {'{:,}'.format(witnet_toolkit_timeout_secs)}\"")
 
-    # Read pricefeeds parameters from configuration file:
-    if load_price_feeds_config(args.json_file, network_name) is None:
-      print(f"Fatal: no configuration for network '{network_name}'")
+    # Read pricefeeds config path, and config itself:
+    config_path = args.json_path if args.json_path else os.getenv('WPFP_CONFIG_PATH')
+    if config_path is None:
+      print(f"Fatal: no config path was set!")
+      exit(1)
+    elif load_price_feeds_config(config_path, network_name) is None:
+      print(f"Fatal: no configuration available for network '{network_name}'")
       exit(1)
     
     # Create Web3 object
@@ -592,7 +596,7 @@ def main(args):
       w3,
       args.loop_interval_secs,
       args.csv_file,
-      args.json_file,
+      config_path,
       network_name,
       web3_symbol,
       web3_from,
@@ -608,10 +612,8 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Connect to an Ethereum provider.')
-    parser.add_argument('--toml_file', dest='toml_file', action='store', required=True,
-                    help='provide the network TOML configuration file')
-    parser.add_argument('--json_file', dest='json_file', action='store', required=True,
-                    help='provide the price feeds JSON configuration file')
+    parser.add_argument('--json_path', dest='json_path', action='store', required=False,
+                    help='provide path to price feeds configuration file')
     parser.add_argument('--loop_interval_secs', dest='loop_interval_secs', action='store', type=int, required=False, default=30,
                     help='seconds after which the script triggers the state of the smart contract')
     parser.add_argument('--provider', dest='provider', action='store', required=False,
