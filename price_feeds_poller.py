@@ -9,6 +9,7 @@ import time
 
 from configs import load_network_config, load_price_feeds_config, load_version
 from contracts import wpr_contract, wpf_contract
+from dotenv import load_dotenv
 from io import StringIO
 from web3 import Web3, exceptions
 from web3.logs import DISCARD
@@ -22,12 +23,12 @@ def handle_requestUpdate(
     contract,
     isRouted,
     latestRequestId,
-    network_symbol,    
-    network_from,
-    network_gas,
-    network_gas_price,
-    network_evm_waiting_timeout_secs,
-    network_evm_polling_latency_secs
+    web3_symbol,    
+    web3_from,
+    web3_gas,
+    web3_gas_price,
+    web3_provider_waiting_secs,
+    web3_provider_polling_secs
   ):
 
     try:
@@ -40,56 +41,56 @@ def handle_requestUpdate(
         print(f" - Routed pairs  : ({contract.functions.getPairsCount().call()})")
 
       # Check that the account has enough balance
-      balance = w3.eth.getBalance(network_from)
+      balance = w3.eth.getBalance(web3_from)
       if balance == 0:
           raise Exception("Master account run out of funds")
 
-      print(f" - Account       : {network_from}")        
-      print(f" - Balance       : {round(balance / 10 ** 18, 5)} {network_symbol}")
+      print(f" - Account       : {web3_from}")        
+      print(f" - Balance       : {round(balance / 10 ** 18, 5)} {web3_symbol}")
 
       # Apply gas price strategy, if any
-      if network_gas_price is None:
-        network_gas_price = w3.eth.generateGasPrice()
-      print( " - Tx. gas price :", "{:,}".format(network_gas_price))     
+      if web3_gas_price is None:
+        web3_gas_price = w3.eth.generateGasPrice()
+      print( " - Tx. gas price :", "{:,}".format(web3_gas_price))     
       
-      if network_gas is not None:
-        print( " - Tx. gas limit :", "{:,}".format(network_gas))
+      if web3_gas is not None:
+        print( " - Tx. gas limit :", "{:,}".format(web3_gas))
 
       # Estimate evm+witnet fee
-      fee = contract.functions.estimateUpdateFee(network_gas_price).call()
-      print(f" - Tx. value     : {round(fee / 10 ** 18, 5)} {network_symbol}")
+      fee = contract.functions.estimateUpdateFee(web3_gas_price).call()
+      print(f" - Tx. value     : {round(fee / 10 ** 18, 5)} {web3_symbol}")
 
       # Send Web3 transaction ..
-      if network_gas is None:
+      if web3_gas is None:
         # .. without a gas limit
         tx = contract.functions.requestUpdate().transact({
-          "from": network_from,
-          "gasPrice": network_gas_price,
+          "from": web3_from,
+          "gasPrice": web3_gas_price,
           "value": fee
         })
       else:
         # .. with the gas limit specified in config file        
         tx = contract.functions.requestUpdate().transact({
-          "from": network_from,
-          "gas": network_gas,
-          "gasPrice": network_gas_price,
+          "from": web3_from,
+          "gas": web3_gas,
+          "gasPrice": web3_gas_price,
           "value": fee
         })
 
       # Log send transaction attempt
-      log_master_balance(csv_filename, network_from, balance, tx.hex())
+      log_master_balance(csv_filename, web3_from, balance, tx.hex())
       print(f" ~ Tx. hash      : {tx.hex()}")      
 
       # Wait for tx receipt and print relevant tx info upon reception
       receipt = w3.eth.wait_for_transaction_receipt(
         tx,
-        network_evm_waiting_timeout_secs,
-        network_evm_polling_latency_secs
+        web3_provider_waiting_secs,
+        web3_provider_polling_secs
       )
-      total_fee = balance - w3.eth.getBalance(network_from)
+      total_fee = balance - w3.eth.getBalance(web3_from)
       print( " > Tx. block num.:", "{:,}".format(receipt.get("blockNumber")))
       print( " > Tx. total gas :", "{:,}".format(receipt.get("gasUsed")))
-      print( " > Tx. total fee :", round(total_fee / 10 ** 18, 5), network_symbol)
+      print( " > Tx. total fee :", round(total_fee / 10 ** 18, 5), web3_symbol)
 
     except exceptions.TimeExhausted:
       print(f"   ** Transaction is taking too long !!")
@@ -198,16 +199,16 @@ def log_loop(
     csv_filename,
     pfs_config_file_path,
     network_name,
-    network_symbol,
-    network_from,
-    network_gas,
-    network_gas_price,
-    network_evm_finalization_secs,
-    network_evm_max_reverts,
-    network_evm_waiting_timeout_secs,
-    network_evm_polling_latency_secs,
-    network_witnet_resolution_secs,
-    network_witnet_toolkit_timeout_secs
+    web3_symbol,
+    web3_from,
+    web3_gas,
+    web3_gas_price,
+    web3_finalization_secs,
+    web3_max_reverts,
+    web3_provider_waiting_secs,
+    web3_provider_polling_secs,
+    witnet_resolution_secs,
+    witnet_toolkit_timeout_secs
   ):
     pfs_config = load_price_feeds_config(pfs_config_file_path, network_name)
     pfs_router = wpr_contract(w3, pfs_config['address'])
@@ -285,12 +286,12 @@ def log_loop(
 
     print(f"Ok, so let's poll every {loop_interval_secs} seconds...")
     low_balance_ts = int(time.time()) - 900
-    total_finalization_secs = network_evm_finalization_secs + network_witnet_resolution_secs
+    total_finalization_secs = web3_finalization_secs + witnet_resolution_secs
     while True:
       print()
       loop_ts = int(time.time())
       
-      balance = w3.eth.getBalance(network_from)
+      balance = w3.eth.getBalance(web3_from)
       time_left_secs = time_to_die_secs(balance, pfs)
       if time_left_secs > 0:
         if time_left_secs <= 86400 * 3 and (loop_ts - low_balance_ts) >= 900:
@@ -397,7 +398,7 @@ def log_loop(
                 try:
                   next_price = dry_run_request(
                     contract.functions.bytecode().call(),
-                    network_witnet_toolkit_timeout_secs
+                    witnet_toolkit_timeout_secs
                   )
                 except Exception as ex:
                   # ...if dry run fails, assume 0 deviation as to, at least, guarantee the heartbeat periodicity is met
@@ -433,12 +434,12 @@ def log_loop(
                 contract,
                 pf['isRouted'],
                 pf['latestRequestId'],
-                network_symbol,
-                network_from,
-                network_gas,
-                network_gas_price,
-                network_evm_waiting_timeout_secs,
-                network_evm_polling_latency_secs
+                web3_symbol,
+                web3_from,
+                web3_gas,
+                web3_gas_price,
+                web3_provider_waiting_secs,
+                web3_provider_polling_secs
               )
               latestRequestId = result[0]
               if latestRequestId > 0:
@@ -449,7 +450,7 @@ def log_loop(
               elif latestRequestId < 0:
                 pf["lastRevertedTx"] = result[1]
                 pf["reverts"] = pf["reverts"] + 1
-                if pf["reverts"] >= network_evm_max_reverts:
+                if pf["reverts"] >= web3_max_reverts:
                   pf["auto_disabled"] = True
 
               # on fully successfull update request:
@@ -488,29 +489,33 @@ def log_loop(
 def main(args):    
     print("================================================================================")
     print(load_version())
-    
-    # Read network parameters from configuration file:
-    network_config = load_network_config(args.toml_file)
-    network_name = network_config['network']['name']
-    network_symbol = network_config["network"].get("symbol", "ETH")
-    network_provider = args.provider if args.provider else network_config['network']['provider']
-    network_provider_poa = network_config["network"].get("provider_poa", False)
-    network_provider_timeout_secs = network_config['network'].get("provider_timeout_secs", 60)
-    network_from = network_config["network"]["from"]
-    network_gas = network_config["network"].get("gas")
-    network_gas_price = network_config["network"].get("gas_price")
-    network_evm_finalization_secs = network_config["network"].get("evm_finalization_secs", 60)
-    network_evm_max_reverts = network_config["network"].get("evm_max_reverts", 3)
-    network_evm_waiting_timeout_secs = network_config["network"].get("evm_waiting_timeout_secs", 130)
-    network_evm_polling_latency_secs = network_config["network"].get("evm_polling_latency_secs", 13)
-    network_witnet_resolution_secs = network_config["network"].get("witnet_resolution_latency_secs", 300)
-    network_witnet_toolkit_timeout_secs = network_config["network"].get("witnet_toolkit_timeout_secs", 15)
+    load_dotenv()
 
-    # Print timers set-up:
-    print(f"Polling period: {'{:,}'.format(args.loop_interval_secs)}\"")
-    print(f"EVM finalization time: {'{:,}'.format(network_evm_finalization_secs)}\"")
-    print(f"Witnet resolution time: {'{:,}'.format(network_witnet_resolution_secs)}\"")
-    print(f"Witnet toolkit timeout: {'{:,}'.format(network_witnet_toolkit_timeout_secs)}\"")
+    # Read network parameters from environment:
+    network_name = os.getenv('WPFP_NETWORK_NAME')
+    network_timeout_secs = int(os.getenv('WPFP_NETWORK_TIMEOUT_SECS') or 60)
+
+    # Read web3 parameters from environment:
+    web3_finalization_secs = int(os.getenv('WPFP_WEB3_FINALIZATION_SECS') or 60)
+    web3_from = os.getenv('WPFP_WEB3_FROM')
+    web3_gas = int(os.getenv('WPFP_WEB3_GAS'))
+    web3_gas_price = int(os.getenv('WPFP_WEB3_GAS_PRICE'))
+    web3_max_reverts = int(os.getenv('WPFP_WEB3_MAX_REVERTS') or 3)
+    web3_provider = args.provider if args.provider else os.getenv('WPFP_WEB3_PROVIDER')
+    web3_provider_poa = bool(os.getenv('WPFP_WEB3_PROVIDER_POA'))
+    web3_provider_waiting_secs = int(os.getenv('WPFP_WEB3_PROVIDER_WAITING_TIMEOUT_SECS') or 130)
+    web3_provider_polling_secs = int(os.getenv('WPFP_WEB3_PROVIDER_POLLING_LATENCY_SECS') or 13)
+    web3_symbol = os.getenv('WPFP_WEB3_SYMBOL') or "ETH"
+
+    # Read witnet parameters from environment:
+    witnet_resolution_secs = int(os.getenv('WPFP_WITNET_RESOLUTION_SECS') or 300)
+    witnet_toolkit_timeout_secs = int(os.getenv('WPFP_WITNET_TOOLKIT_TIMEOUT_SECS') or 15)
+
+    # Echo timers set-up:
+    print(f"Loop interval period  : {'{:,}'.format(args.loop_interval_secs)}\"")
+    print(f"Web3 finalization time: {'{:,}'.format(web3_finalization_secs)}\"")
+    print(f"Witnet resolution time: {'{:,}'.format(witnet_resolution_secs)}\"")
+    print(f"Witnet toolkit timeout: {'{:,}'.format(witnet_toolkit_timeout_secs)}\"")
 
     # Read pricefeeds parameters from configuration file:
     if load_price_feeds_config(args.json_file, network_name) is None:
@@ -519,20 +524,20 @@ def main(args):
     
     # Create Web3 object
     w3 = Web3(Web3.HTTPProvider(
-      network_provider,
-      request_kwargs={'timeout': network_provider_timeout_secs}
+      web3_provider,
+      request_kwargs={'timeout': network_timeout_secs}
     ))
 
     # Inject POA middleware, if necessary
-    if network_provider_poa:
+    if web3_provider_poa:
       w3.middleware_onion.inject(geth_poa_middleware, layer=0)
       print(f"Injected geth_poa_middleware.")
 
-    if not isinstance(network_gas_price, int):
+    if not isinstance(web3_gas_price, int):
       # Apply appropiate gas price strategy if no integer value is specified in `gas_price`
       
       # If network is Ethereum mainnet, and "estimate_medium" is specied as `gas_price`, try to activate `medium_gas_price_strategy`
-      if network_gas_price == "estimate_medium":        
+      if web3_gas_price == "estimate_medium":        
         if w3.eth.chainId == 1:
           from web3 import middleware
           from web3.gas_strategies.time_based import medium_gas_price_strategy
@@ -545,35 +550,35 @@ def main(args):
           w3.middleware_onion.add(middleware.latest_block_based_cache_middleware)
           w3.middleware_onion.add(middleware.simple_cache_middleware)
 
-          network_gas_price = None
+          web3_gas_price = None
           print("Gas price strategy: estimate_medium")
     
         else:          
           # "estimate_medium" strategy not supported in networks other than Ethereum mainnet
-          print(f"Invalid gas price: {network_gas_price}. \"estimate_medium\" can only be used for mainnet (current id: {w3.eth.chainId})")
+          print(f"Invalid gas price: {web3_gas_price}. \"estimate_medium\" can only be used for mainnet (current id: {w3.eth.chainId})")
           exit(1)
       
       # If no `gas_price` value is specified at all, try to activate general RPC gas price strategy:
-      elif network_gas_price is None:
+      elif web3_gas_price is None:
         from web3.gas_strategies.rpc import rpc_gas_price_strategy
         w3.eth.set_gas_price_strategy(rpc_gas_price_strategy)
         print("Gas price strategy: eth_gasPrice")
 
       # Exit if anything other text is specified in `gas_price`,   
       else:
-        print(f"Invalid gas price: {network_gas_price}.")
+        print(f"Invalid gas price: {web3_gas_price}.")
         exit(1)
 
     else:    
-      print(f"Gas price strategy: invariant ({'{:,}'.format(network_gas_price)})")
+      print(f"Gas price strategy: invariant ({'{:,}'.format(web3_gas_price)})")
 
     # Connect to the Web3 provider
     try:
       current_block = w3.eth.blockNumber
-      print(f"Connected to '{network_name}' at block #{current_block} via {network_provider}")      
+      print(f"Connected to '{network_name}' at block #{current_block} via {web3_provider}")      
 
     except Exception as ex:
-      print(f"Fatal: connection failed to {network_provider}: {ex}")
+      print(f"Fatal: connection failed to {web3_provider}: {ex}")
       exit(1)
 
     # Log Web3 client version
@@ -589,16 +594,16 @@ def main(args):
       args.csv_file,
       args.json_file,
       network_name,
-      network_symbol,
-      network_from,
-      network_gas,
-      network_gas_price,      
-      network_evm_finalization_secs,
-      network_evm_max_reverts,
-      network_evm_waiting_timeout_secs,
-      network_evm_polling_latency_secs,
-      network_witnet_resolution_secs,
-      network_witnet_toolkit_timeout_secs
+      web3_symbol,
+      web3_from,
+      web3_gas,
+      web3_gas_price,      
+      web3_finalization_secs,
+      web3_max_reverts,
+      web3_provider_waiting_secs,
+      web3_provider_polling_secs,
+      witnet_resolution_secs,
+      witnet_toolkit_timeout_secs
     )
 
 if __name__ == '__main__':
