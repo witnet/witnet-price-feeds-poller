@@ -13,5 +13,4 @@ RUN ["npm", "install"]
 RUN ["npx", "witnet-toolkit", "update"]
 
 # Set the entrypoint
-ENTRYPOINT ["python", "price_feeds_poller.py", "--loop_interval_secs", "45"]
-CMD ["--toml_file", "$1"]
+ENTRYPOINT ["python", "price_feeds_poller.py"]
