@@ -99,7 +99,7 @@ def handle_requestUpdate(
     except Exception as ex:
       print(f"   xx Transaction rejected: {ex}")
       return [ 0 ]
-   
+
     # Check if transaction was succesful
     if receipt['status'] == False:
       print(f"   $$ Transaction reverted !!")
@@ -222,58 +222,63 @@ def log_loop(
     for caption in pfs_config['feeds']:
       erc2362id = pfs_router.functions.currencyPairId(caption).call().hex()
       if pfs_router.functions.supportsCurrencyPair(erc2362id).call():
-        try:
-          print(f"{caption}:")
-          contract = wpf_contract(w3, pfs_router.functions.getPriceFeed(erc2362id).call())
-          cooldown = pfs_config['feeds'][caption].get("minSecsBetweenUpdates", 0)
-          deviation = pfs_config['feeds'][caption].get("deviationPercentage", 0.0)
-          heartbeat = int(pfs_config['feeds'][caption].get("maxSecsBetweenUpdates", 0))
-          routed = pfs_config['feeds'][caption].get("isRouted", False)
-          lastPrice = int(contract.functions.lastPrice().call())
-          lastTimestamp = contract.functions.lastTimestamp().call()
-          latestQueryId = contract.functions.latestQueryId().call()
-          if routed == False:
-            pendingUpdate = contract.functions.pendingUpdate().call()
-            witnet = contract.functions.witnet().call()
-          else:
-            pendingUpdate = False
-            witnet = None
-          pfs.append({
-            "id": erc2362id,
-            "caption": caption,
-            "contract": contract,
-            "deviation": deviation,
-            "heartbeat": heartbeat,
-            "isRouted": routed,
-            "lastPrice": lastPrice,
-            "lastTimestamp": lastTimestamp,
-            "latestRequestId": latestQueryId,
-            "cooldown": cooldown,
-            "pendingUpdate": pendingUpdate,
-            "witnet": witnet,
-            "reverts": 0,
-            "auto_disabled": False,
-            "lastRevertedTx": "",
-            "fees": [],
-            "secs": []
-          })
-          
-          print(f"  => Witnet address : {witnet}")
-          print(f"  => Price feed     : {contract.address}")
-          if heartbeat > 0:
-            print(f"  => Heartbeat   : {heartbeat} seconds")
-          if cooldown > 0:
-            print(f"  => Cooldown    : {cooldown} seconds")
-          if routed == True:
-            print(f"  => Deviation   : (Routed)")
-          else:
-            print(f"  => Deviation   : {deviation} %")          
-          print(f"  => Last price  : {lastPrice / 10 ** int(caption.split('-')[2])} {pfs_config['feeds'][caption]['label']}")
-          print(f"  => Last update : {datetime.datetime.fromtimestamp(lastTimestamp).strftime('%Y-%m-%d %H:%M:%S %Z')}")
-          print(f"  => Latest id   : {latestQueryId} (pending: {pendingUpdate})\n")
-        except Exception as ex:
-          print(ex)
-
+        print(f"{caption}:")
+        for attempt in range(5):
+          try:
+            contract = wpf_contract(w3, pfs_router.functions.getPriceFeed(erc2362id).call())
+            cooldown = pfs_config['feeds'][caption].get("minSecsBetweenUpdates", 0)
+            deviation = pfs_config['feeds'][caption].get("deviationPercentage", 0.0)
+            heartbeat = int(pfs_config['feeds'][caption].get("maxSecsBetweenUpdates", 0))
+            routed = pfs_config['feeds'][caption].get("isRouted", False)
+            lastPrice = int(contract.functions.lastPrice().call())
+            lastTimestamp = contract.functions.lastTimestamp().call()
+            latestQueryId = contract.functions.latestQueryId().call()
+            if routed == False:
+              pendingUpdate = contract.functions.pendingUpdate().call()
+              witnet = contract.functions.witnet().call()
+            else:
+              pendingUpdate = False
+              witnet = None
+            pfs.append({
+              "id": erc2362id,
+              "caption": caption,
+              "contract": contract,
+              "deviation": deviation,
+              "heartbeat": heartbeat,
+              "isRouted": routed,
+              "lastPrice": lastPrice,
+              "lastTimestamp": lastTimestamp,
+              "latestRequestId": latestQueryId,
+              "cooldown": cooldown,
+              "pendingUpdate": pendingUpdate,
+              "witnet": witnet,
+              "reverts": 0,
+              "auto_disabled": False,
+              "lastRevertedTx": "",
+              "fees": [],
+              "secs": []
+            })
+            print(f"  => Witnet address : {witnet}")
+            print(f"  => Price feed     : {contract.address}")
+            if heartbeat > 0:
+              print(f"  => Heartbeat   : {heartbeat} seconds")
+            if cooldown > 0:
+              print(f"  => Cooldown    : {cooldown} seconds")
+            if routed == True:
+              print(f"  => Deviation   : (Routed)")
+            else:
+              print(f"  => Deviation   : {deviation} %")          
+            print(f"  => Last price  : {lastPrice / 10 ** int(caption.split('-')[2])} {pfs_config['feeds'][caption]['label']}")
+            print(f"  => Last update : {datetime.datetime.fromtimestamp(lastTimestamp).strftime('%Y-%m-%d %H:%M:%S %Z')}")
+            print(f"  => Latest id   : {latestQueryId} (pending: {pendingUpdate})\n")
+            break
+          except Exception as ex:
+            if attempt < 4:
+              print(f"  >< Attempt #{attempt}: {ex}")
+              continue
+            else:
+              raise
+        
         if len(caption) > captionMaxLength:
           captionMaxLength = len(caption)
 
@@ -306,7 +311,7 @@ def log_loop(
         contract = pf["contract"]
         caption = pf['caption']
         caption += " " * (captionMaxLength - len(caption))
-        
+
         # Poll latest update status
         try:
           # Detect eventual pricefeed updates in the router:
@@ -317,25 +322,29 @@ def log_loop(
             contract = wpf_contract(w3, contractAddr)
             pf["contract"] = contract
             if contractAddr != "0x0000000000000000000000000000000000000000":
-              try:
-                pf["auto_disabled"] = False
-                pf["cooldown"] = int(pfs_config['feeds'][pf['caption']].get("minSecsBetweenUpdates", 0))
-                pf["deviation"] = pfs_config['feeds'][pf['caption']].get("deviationPercentage", 0.0)
-                pf["heartbeat"] = int(pfs_config['feeds'][pf['caption']].get("maxSecsBetweenUpdates", 0))                
-                pf["isRouted"] = pfs_config['feeds'][pf['caption']].get("isRouted", False)
-                if pf["isRouted"] == False:
-                  pf["witnet"] = contract.functions.witnet().call()
-                pf["lastPrice"] = int(contract.functions.lastPrice().call())
-                pf["lastRevertedTx"] = ""
-                pf["lastTimestamp"] = contract.functions.lastTimestamp().call()
-                pf["latestQueryId"] = contract.functions.latestQueryId().call()
-                pf["pendingUpdate"] = contract.functions.pendingUpdate().call()
-                pf["reverts"] = 0
-                pf["fees"].clear()
-                pf["secs"].clear()
-
-              except Exception as ex:
-                print(f"{caption} >< unable to read metadata from new contract {contractAddr}: {ex}")
+              for attempt in range(5):
+                try:
+                  pf["auto_disabled"] = False
+                  pf["cooldown"] = int(pfs_config['feeds'][pf['caption']].get("minSecsBetweenUpdates", 0))
+                  pf["deviation"] = pfs_config['feeds'][pf['caption']].get("deviationPercentage", 0.0)
+                  pf["heartbeat"] = int(pfs_config['feeds'][pf['caption']].get("maxSecsBetweenUpdates", 0))
+                  pf["isRouted"] = pfs_config['feeds'][pf['caption']].get("isRouted", False)
+                  if pf["isRouted"] == False:
+                    pf["witnet"] = contract.functions.witnet().call()
+                  pf["lastPrice"] = int(contract.functions.lastPrice().call())
+                  pf["lastRevertedTx"] = ""
+                  pf["lastTimestamp"] = contract.functions.lastTimestamp().call()
+                  pf["latestQueryId"] = contract.functions.latestQueryId().call()
+                  pf["pendingUpdate"] = contract.functions.pendingUpdate().call()
+                  pf["reverts"] = 0
+                  pf["fees"].clear()
+                  pf["secs"].clear()
+                  break
+                except Exception as ex:
+                  if attempt >= 4:
+                    print(f"{caption} >< unable to read metadata from new contract {contractAddr}: {ex}")
+                  else:
+                    continue
 
           if contractAddr == "0x0000000000000000000000000000000000000000":
             # Nothing to do if router stopped supporting this pricefeed
@@ -479,7 +488,7 @@ def log_loop(
         
         # Capture exceptions while reading state from contract
         except Exception as ex:
-          print(f"{caption} .. Exception when getting state from contract {contract.address}:\n{ex}")
+          print(f"{caption} .. Exception when getting state from contract {contract.address}: {ex}")
       
       # Sleep just enough between loops
       preemptive_secs = loop_interval_secs - int(time.time()) + loop_ts
