@@ -507,8 +507,8 @@ def main(args):
     # Read web3 parameters from environment:
     web3_finalization_secs = int(os.getenv('WPFP_WEB3_FINALIZATION_SECS') or 60)
     web3_from = os.getenv('WPFP_WEB3_FROM')
-    web3_gas = int(os.getenv('WPFP_WEB3_GAS'))
-    web3_gas_price = int(os.getenv('WPFP_WEB3_GAS_PRICE'))
+    web3_gas = int(os.getenv('WPFP_WEB3_GAS')) if os.getenv('WPFP_WEB3_GAS') else None
+    web3_gas_price = int(os.getenv('WPFP_WEB3_GAS_PRICE')) if os.getenv('WPFP_WEB3_GAS_PRICE') else None
     web3_max_reverts = int(os.getenv('WPFP_WEB3_MAX_REVERTS') or 3)
     web3_provider = args.provider if args.provider else os.getenv('WPFP_WEB3_PROVIDER')
     web3_provider_poa = bool(os.getenv('WPFP_WEB3_PROVIDER_POA'))
