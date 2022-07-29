@@ -324,27 +324,33 @@ def log_loop(
             if contractAddr != "0x0000000000000000000000000000000000000000":
               for attempt in range(5):
                 try:
-                  pf["auto_disabled"] = False
+                  # read from config
                   pf["cooldown"] = int(pfs_config['feeds'][pf['caption']].get("minSecsBetweenUpdates", 0))
                   pf["deviation"] = pfs_config['feeds'][pf['caption']].get("deviationPercentage", 0.0)
                   pf["heartbeat"] = int(pfs_config['feeds'][pf['caption']].get("maxSecsBetweenUpdates", 0))
                   pf["isRouted"] = pfs_config['feeds'][pf['caption']].get("isRouted", False)
+                  
+                  # read from web3
                   if pf["isRouted"] == False:
                     pf["witnet"] = contract.functions.witnet().call()
                   pf["lastPrice"] = int(contract.functions.lastPrice().call())
-                  pf["lastRevertedTx"] = ""
                   pf["lastTimestamp"] = contract.functions.lastTimestamp().call()
                   pf["latestQueryId"] = contract.functions.latestQueryId().call()
                   pf["pendingUpdate"] = contract.functions.pendingUpdate().call()
-                  pf["reverts"] = 0
+
+                  # reset flags
                   pf["fees"].clear()
                   pf["secs"].clear()
+                  pf["auto_disabled"] = False
+                  pf["lastRevertedTx"] = ""
+                  pf["reverts"] = 0
                   break
                 except Exception as ex:
-                  if attempt >= 4:
-                    print(f"{caption} >< unable to read metadata from new contract {contractAddr}: {ex}")
+                  if attempt < 4:
+                    print(f"{caption} >< refreshing contract state attempt #{attempt}: {ex}")
+                    time.sleep(1)
                   else:
-                    continue
+                    raise ex
 
           if contractAddr == "0x0000000000000000000000000000000000000000":
             # Nothing to do if router stopped supporting this pricefeed
@@ -546,9 +552,8 @@ def main(args):
       w3.middleware_onion.inject(geth_poa_middleware, layer=0)
       print(f"Injected geth_poa_middleware.")
 
-    if not isinstance(web3_gas_price, int):
-      # Apply appropiate gas price strategy if no integer value is specified in `gas_price`
-      
+    # Apply appropiate gas price strategy if no integer value is specified in `gas_price`
+    if not isinstance(web3_gas_price, int):      
       # If network is Ethereum mainnet, and "estimate_medium" is specied as `gas_price`, try to activate `medium_gas_price_strategy`
       if web3_gas_price == "estimate_medium":        
         if w3.eth.chainId == 1:

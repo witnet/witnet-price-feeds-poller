@@ -1,9 +1,6 @@
 import json
 import urllib3
 
-class TomlError(Exception):
-    pass
-
 def load_version():
   package = json.load(open("package.json"))
   return package.get("name") + " v" + package.get("version")
@@ -19,5 +16,6 @@ def load_price_feeds_config(path, network_name):
     else:
       config = json.load(open(path))
   except Exception as ex:
-    return None 
+    print(f"Fatal exception when trying to read triggering conditions from {path}:\n=> {ex}")
+    exit(1)
   return config.get("chains").get(chain_name).get("networks").get(network_name)
