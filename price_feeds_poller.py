@@ -225,7 +225,11 @@ def log_loop(
         print(f"{caption}:")
         for attempt in range(5):
           try:
-            contract = wpf_contract(w3, pfs_router.functions.getPriceFeed(erc2362id).call())
+            addr = pfs_router.functions.getPriceFeed(erc2362id).call()
+            if addr == "0x0000000000000000000000000000000000000000":
+              print(f"  >< Skipped: not currently supported by this router.")
+              break
+            contract = wpf_contract(w3, addr)
             cooldown = pfs_config['feeds'][caption].get("minSecsBetweenUpdates", 0)
             deviation = pfs_config['feeds'][caption].get("deviationPercentage", 0.0)
             heartbeat = int(pfs_config['feeds'][caption].get("maxSecsBetweenUpdates", 0))
@@ -277,7 +281,8 @@ def log_loop(
               print(f"  >< Attempt #{attempt}: {ex}")
               continue
             else:
-              raise
+              print(f"  >< Skipped: Exception: {ex}")
+              break
         
         if len(caption) > captionMaxLength:
           captionMaxLength = len(caption)
