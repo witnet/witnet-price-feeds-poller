@@ -228,8 +228,9 @@ def handle_loop(
       
       balance = w3.eth.getBalance(web3_from)
       time_left_secs = time_to_die_secs(balance, pfs)
+      timer_out = (loop_ts - low_balance_ts) >= 900
       if time_left_secs > 0:
-        if time_left_secs <= 86400 * 3 and (loop_ts - low_balance_ts) >= 900:
+        if time_left_secs <= 86400 * 3 and timer_out:
           # start warning every 900 seconds if estimated time before draiing funds is less than 3 days
           low_balance_ts = loop_ts
           print(f"LOW FUNDS !!!: estimated {round(time_left_secs / 3600, 2)} hours before running out of funds")
@@ -248,8 +249,9 @@ def handle_loop(
         try:
 
           # Detect eventual RAD updates:
-          rad_hash = feeds.functions.lookupRadHash(id).call().hex()
-          if pf['isRouted'] == False and pf['radHash'] != rad_hash:
+          if timer_out and pf['isRouted'] == False:
+            rad_hash = feeds.functions.lookupRadHash(id).call().hex()
+            if pf['radHash'] != rad_hash:
               config = load_price_feeds_config(feeds_config_file_path, network_name)
               print(f"{caption} <> contract RAD hash changed to {rad_hash}")
               pf['radHash'] = rad_hash
@@ -293,7 +295,6 @@ def handle_loop(
               print(f"{caption} >< too many reverts: see last reverted tx: {pf['lastRevertedTx']}")
             else:
               print(f"{caption} >< this feed is not supported anymore.")
-
             continue
 
           # Poll latest update status
