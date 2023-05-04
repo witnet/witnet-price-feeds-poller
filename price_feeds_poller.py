@@ -213,7 +213,7 @@ def handle_loop(
           captionMaxLength = len(caption)
 
       else:
-        print(f"{caption}: hashed as {pf_id}, it not currently supported.")
+        print(f"{caption}: hashed as {pf_id}, currently not supported.")
 
     if len(pfs) == 0:
       print("Sorry, no price feeds to poll :/")
