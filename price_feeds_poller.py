@@ -305,16 +305,12 @@ def handle_loop(
         
           # On routed pfs: just check for spontaneous price updates
           if pf["isRouted"] == True:
-            latest_update_query_id = feeds.functions.latestUpdateQueryId(id).call()
             if latest_price[1] > pf["latestTimestamp"]:
               print(f"{caption} <> routed price updated to {latest_price[0] / 10 ** int(caption.strip().split('-')[2])} {config['feeds'][caption]['label']}")
               pf["latestTimestamp"] = latest_price[1]
               pf["latestUpdateQueryId"] = latest_update_query_id
             else:
-              if latest_price[3] == 1 and latest_update_query_id != pf["latestUpdateQueryId"]:
-                print(f"{caption} .. awaiting routed response to query #{latest_update_query_id} (after {elapsed_secs} secs)")
-              else:
-                print(f"{caption} .. awaiting routed eventual update.")
+              print(f"{caption} .. awaiting eventual routed update.")
             continue
 
           # If still waiting for an update...
@@ -380,15 +376,7 @@ def handle_loop(
                   reason = f"deviation is greater than {pf['deviation']} %"
 
               else:
-                # external_update = False
-                # if pf['isRouted'] == True:
-                #   # Check for update signalling on cached-routed price feeds                
-                #   external_update = contract.functions.pendingUpdate().call()
-                  
-                # if external_update:
-                #   reason = f"a routed update was detected"
-                # else:
-                print(f"{caption} .. awaiting routed update, or heartbeat condition, for another {pf['heartbeat'] - elapsed_secs} secs")
+                print(f"{caption} .. awaiting heartbeat condition, for another {pf['heartbeat'] - elapsed_secs} secs")
                 continue
                 
               print(f"{caption} >> Requesting update after {elapsed_secs} seconds because {reason}:")
@@ -431,12 +419,6 @@ def handle_loop(
                 pf["secs"].append(elapsed_secs)                
                 if len(pf["secs"]) > 256:
                   del pf["secs"][0]
-
-                # # and in case of routed priced, update lastTimestamp immediately
-                # if pf["isRouted"]:
-                #   lastValue = contract.functions.lastValue().call()
-                #   pf["lastTimestamp"] = lastValue[1]
-                #   print(f" <<<< lastPrice was {lastValue[0]}, {int(time.time()) - lastValue[1]} secs ago")
 
             else:
               secs_until_next_check = pf['cooldown'] - elapsed_secs - total_finalization_secs
