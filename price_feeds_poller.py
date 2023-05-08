@@ -121,6 +121,7 @@ def handle_loop(
     feeds_config_file_path,
     network_name,
     web3_symbol,
+    web3_address,
     web3_from,
     web3_gas,
     web3_gas_price,
@@ -132,9 +133,9 @@ def handle_loop(
     witnet_toolkit_timeout_secs
   ):
     config = load_price_feeds_config(feeds_config_file_path, network_name)
-    feeds = feeds_contract(w3, config['address'])
+    feeds = feeds_contract(w3, web3_address)
     if feeds.address is None:
-      print("Fatal: no WitnetPriceFeeds address")
+      print("Fatal: invalid WitnetPriceFeeds address")
       exit(1)
 
     print(f"\nUsing WitnetBytecodes at    {feeds.functions.registry().call()}")
@@ -444,6 +445,7 @@ def main(args):
     network_timeout_secs = int(os.getenv('WPFP_NETWORK_TIMEOUT_SECS') or 60)
 
     # Read web3 parameters from environment:
+    web3_address = os.getenv('WPFP_WEB3_ADDRESS')
     web3_finalization_secs = int(os.getenv('WPFP_WEB3_FINALIZATION_SECS') or 60)
     web3_from = os.getenv('WPFP_WEB3_FROM')
     web3_gas = int(os.getenv('WPFP_WEB3_GAS')) if os.getenv('WPFP_WEB3_GAS') else None
@@ -546,6 +548,7 @@ def main(args):
       config_path,
       network_name,
       web3_symbol,
+      web3_address,
       web3_from,
       web3_gas,
       web3_gas_price,      
