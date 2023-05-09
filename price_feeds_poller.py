@@ -4,6 +4,7 @@ import argparse
 import contextlib
 import datetime
 import os
+import re
 import subprocess
 import sys
 import time
@@ -368,7 +369,7 @@ def handle_loop(
                   )
                 except Exception as ex:
                   # ...if dry run fails, assume 0 deviation as to, at least, guarantee the heartbeat periodicity is met
-                  print(f"{caption} >< Dry-run failed:", ex)
+                  print(f"{caption} >< Dry-run failed:", re.escape(ex))
                   continue
                 deviation = round(100 * ((next_price - last_price) / last_price), 2)
                 
@@ -381,7 +382,7 @@ def handle_loop(
                   reason = f"deviation is greater than {pf['deviation']} %"
 
               else:
-                print(f"{caption} .. awaiting heartbeat condition, for another {pf['heartbeat'] - elapsed_secs} secs")
+                print(f"{caption} .. expecting heartbeat condition for another {pf['heartbeat'] - elapsed_secs} secs")
                 continue
                 
               print(f"{caption} >> Requesting update after {elapsed_secs} seconds because {reason}:")
@@ -598,7 +599,7 @@ def dry_run_request(bytecode, timeout_secs):
 
 def log_exception_state(addr, reason):
   # log the error and wait 1 second before next iteration
-  print(f"Exception while getting state from contract {addr}:\n{reason}")
+  print(f"Exception while getting state from {addr}:\n{reason}")
   time.sleep(1)
 
 def log_master_balance(csv_filename, addr, balance, txhash):
