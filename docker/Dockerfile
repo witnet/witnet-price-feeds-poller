@@ -10,7 +10,7 @@ WORKDIR /home/pn/app
 # Install dependencies
 RUN ["pip", "install", "-r", "requirements.txt"]
 RUN ["npm", "install"]
-RUN ["npx", "witnet-toolkit", "update"]
+RUN yes | npx witnet-toolkit update
 
 # Set the entrypoint
 ENTRYPOINT ["python", "price_feeds_poller.py"]
