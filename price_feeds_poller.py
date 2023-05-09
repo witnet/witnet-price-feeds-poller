@@ -312,11 +312,10 @@ def handle_loop(
           # On routed pfs: just check for spontaneous price updates
           if pf["isRouted"] == True:
             if latest_price[1] > pf["latestTimestamp"]:
-              print(f"{caption} <> routed price updated to {latest_price[0] / 10 ** int(caption.strip().split('-')[2])} {config['feeds'][caption]['label']}")
+              print(f"{caption} <> routed price updated to {latest_price[0] / 10 ** int(caption.strip().split('-')[2])} {config['feeds'][caption.strip()]['label']}")
               pf["latestTimestamp"] = latest_price[1]
-              pf["latestUpdateQueryId"] = latest_update_query_id
             else:
-              print(f"{caption} .. awaiting eventual routed update.")
+              print(f"{caption} .. expecting eventual routed update.")
             continue
 
           # If still waiting for an update...
