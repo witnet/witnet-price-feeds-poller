@@ -1,0 +1,12 @@
+name: Build a Docker image
+
+inputs:
+  tag:
+    description: Tag for the built Docker image
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Build the image itself
+      run: docker build -t ${{ inputs.tag }} -f docker/Dockerfile .
