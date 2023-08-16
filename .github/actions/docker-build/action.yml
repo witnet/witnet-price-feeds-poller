@@ -1,4 +1,5 @@
 name: Build a Docker image
+description: Builds a Docker image based on ./docker/Dockerfile, and using a tag passed as a parameter
 
 inputs:
   tag:
@@ -9,4 +10,5 @@ runs:
   using: "composite"
   steps:
     - name: Build the image itself
+      shell: bash
       run: docker build -t ${{ inputs.tag }} -f docker/Dockerfile .

@@ -8,13 +8,20 @@ on:
 jobs:
   preparations:
     name: Preparations
-    runs-on: ubuntu-latest
-    uses: ./.github/workflows/push
+    uses: ./.github/workflows/push.yml
 
   docker-publish:
     name: Publish Docker image as tag
+    needs: [ "preparations" ]
     runs-on: ubuntu-latest
     steps:
+      - name: Download Docker image from artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: price-feeds-poller.tar
+          path: /tmp
+      - name: Load Docker image
+        run: docker load --input /tmp/price-feeds-poller.tar
       - name: Tag image
         run: docker tag witnet/price-feeds-poller:latest witnet/price-feeds-poller:${{github.ref_name}}
       - name: Log into Docker Hub
@@ -23,5 +30,7 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
       - name: Push image to Docker Hub
-        run: docker push witnet/price-feeds-poller:${{github.ref_name}}
+        run: |
+          docker push witnet/price-feeds-poller:${{github.ref_name}}
+          docker push witnet/price-feeds-poller:latest
 
