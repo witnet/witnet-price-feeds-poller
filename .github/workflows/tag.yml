@@ -8,8 +8,7 @@ on:
 jobs:
   preparations:
     name: Preparations
-    runs-on: ubuntu-latest
-    uses: ./.github/workflows/push
+    uses: ./.github/workflows/push.yml
 
   docker-publish:
     name: Publish Docker image as tag
