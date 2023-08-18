@@ -343,7 +343,7 @@
             "Price-BNB/USDT-6": {
               "label": "₮",
               "deviationPercentage": 3.5,
-              "maxSecsBetweenUpdates": 86400,
+              "maxSecsBetweenUpdates": 300,
               "minSecsBetweenUpdates": 900
             },
             "Price-BTC/USD-6": {

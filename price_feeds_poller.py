@@ -94,7 +94,7 @@ def handle_requestUpdate(
       return [ 0 ]
 
     except Exception as ex:
-      print(f"   xx Transaction rejected: {ex}")
+      print(f"   xx Transaction rejected: {unscape(ex)}")
       return [ 0 ]
 
     # Check if transaction was succesful
@@ -191,7 +191,8 @@ def handle_loop(
               print(f"  => Solver addr : {solverAddr}")
             else:
               print(f"  => RAD hash    : {rad_hash}")
-              print(f"  => Deviation   : {deviation} %")          
+              print(f"  => Deviation   : {deviation} %")
+              print(f"  => Bytecode    : {bytecode.hex()}")
               if heartbeat > 0:
                 print(f"  => Heartbeat   : {heartbeat} seconds")
               if cooldown > 0:
@@ -205,10 +206,10 @@ def handle_loop(
             break
           except Exception as ex:
             if attempt < 4:
-              print(f"  >< Attempt #{attempt}: {ex}")
+              print(f"  >< Attempt #{attempt}: {unscape(ex)}")
               continue
             else:
-              print(f"  >< Skipped: Exception: {ex}")
+              print(f"  >< Skipped: Exception: {unscape(ex)}")
               break
         
         if len(caption) > captionMaxLength:
@@ -242,7 +243,7 @@ def handle_loop(
 
         latest_prices = feeds.functions.latestPrices(ids).call()
       except Exception as ex:
-        print(f"Main loop exception: {re.escape(ex)}")
+        print(f"Main loop exception: {unscape(ex)}")
         time.sleep(1)
         continue
       
@@ -284,7 +285,7 @@ def handle_loop(
                     break
                   except Exception as ex:
                     if attempt < 4:
-                      print(f"{caption} >< refreshing contract state attempt #{attempt}: {ex}")
+                      print(f"{caption} >< refreshing contract state attempt #{attempt}: {unscape(ex)}")
                       time.sleep(1)
                     else:
                       raise ex
@@ -369,7 +370,7 @@ def handle_loop(
                   )
                 except Exception as ex:
                   # ...if dry run fails, assume 0 deviation as to, at least, guarantee the heartbeat periodicity is met
-                  print(f"{caption} >< Dry-run failed:", re.escape(ex))
+                  print(f"{caption} >< Dry-run failed:", unscape(ex))
                   continue
                 deviation = round(100 * ((next_price - last_price) / last_price), 2)
                 
@@ -433,7 +434,7 @@ def handle_loop(
         
         # Capture exceptions while reading state from contract
         except Exception as ex:
-          print(f"{caption} .. Exception when getting state from {feeds.address}: {ex}")
+          print(f"{caption} .. Exception when getting state from {feeds.address}: {unscape(ex)}")
       
       # Sleep just enough between loops
       preemptive_secs = loop_interval_secs - int(time.time()) + loop_ts
@@ -536,7 +537,7 @@ def main(args):
       print(f"Connected to '{network_name}' at block #{current_block} via {web3_provider}")      
 
     except Exception as ex:
-      print(f"Fatal: connection failed to {web3_provider}: {ex}")
+      print(f"Fatal: connection failed to {web3_provider}: {unscape(ex)}")
       exit(1)
 
     # Log Web3 client version
@@ -640,6 +641,32 @@ def time_to_die_secs(balance, pfs):
   else:
     return 0
 
+def unscape(ex):
+  src = str(ex)
+  slashes = 0 # count backslashes
+  dst = ""
+  for loc in range(0, len(src)):
+      char = src[loc]
+      if char == "\\":
+          slashes += 1
+          if slashes == 2:
+              # remove double backslashes
+              slashes = 0
+      elif slashes == 0:
+          # normal char
+          dst += char 
+      else: # slashes == 1
+          if char == '"':
+              # double-quotes
+              dst += char 
+          elif char == "'":
+              # remove single-quote
+              dst += char 
+          else:
+              dst += "\\" + char # keep backslash-escapes like \n or \t
+          slashes = 0
+  return dst
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Connect to an Ethereum provider.')
     parser.add_argument('--json_path', dest='json_path', action='store', required=False,
@@ -652,4 +679,5 @@ if __name__ == '__main__':
                     help='provide the CSV file in which master address balance will be logged after sending every new transaction')
 
     args = parser.parse_args()
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
     main(args)
