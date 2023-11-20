@@ -183,6 +183,8 @@ def handle_loop(
               "revert": 0,
               "auto_disabled": False,
               "lastRevertedTx": "",
+              "lastUpdateFailed": False,
+              "lastUpdateFailedTimestamp": int(time.time()),
               "fees": [],
               "secs": []
             })
@@ -280,6 +282,8 @@ def handle_loop(
                     pf["auto_disabled"] = False
                     pf["isRouted"] = False
                     pf["lastRevertedTx"] = ""
+                    pf["lastUpdateFailed"] = False
+                    pf["lastUpdateFailedTimestamp"] = int(time.time())
                     pf["pendingUpdate"] = False
                     pf["reverts"] = 0
                     break
@@ -295,7 +299,8 @@ def handle_loop(
                 pf["bytecode"] = ""
                 pf["isRouted"] = False
                 pf["lastRevertedTx"] = ""
-                pf["pendingUpdate"] = False                
+                pf["pendingUpdate"] = False   
+                pf["lastUpdateFailed"] = False            
 
           if pf["auto_disabled"]:
             # Skip if this pricefeed is disabled
@@ -324,11 +329,12 @@ def handle_loop(
           if pf["pendingUpdate"] == True:
           
             # A new valid result has just been detected:
-            if status == 2 and latest_price[1] > pf["latestTimestamp"]:
-              pf["pendingUpdate"] = False
+            if status == 2 and latest_price[1] >= pf["latestTimestamp"]:
+              pf["lastUpdateFailed"] = False
               pf["latestPrice"] = latest_price[0]
               elapsed_secs = latest_price[1] - pf["latestTimestamp"] 
               pf["latestTimestamp"] = latest_price[1]
+              pf["pendingUpdate"] = False
               print(f"{caption} << drTxHash: {latest_price[2].hex()} => updated to {latest_price[0] / 10 ** int(caption.strip().split('-')[2])} {config['feeds'][caption.strip()]['label']} (after {elapsed_secs} secs)")
               
             # An invalid result has just been detected:
@@ -336,6 +342,8 @@ def handle_loop(
               pf["pendingUpdate"] = False
               latest_response = feeds.functions.latestUpdateResponse(id).call()
               latest_error = feeds.functions.latestUpdateResultError(id).call()
+              pf["lastUpdateFailed"] = True
+              pf["lastUpdateFailedTimestamp"] = current_ts
               print(f"{caption} >< drTxHash: {latest_response[2].hex()} => \"{str(latest_error[1])}\"")
 
             else:
@@ -349,7 +357,7 @@ def handle_loop(
           # If no update is pending:
           elif pf["isRouted"] == False:
             
-            if elapsed_secs >= pf["cooldown"] - total_finalization_secs:
+            if pf["lastUpdateFailed"] == False or current_ts >= pf["lastUpdateFailedTimestamp"] + pf["cooldown"] - total_finalization_secs:
               last_price = pf["latestPrice"]
               deviation = 0
 
