@@ -9,4 +9,5 @@ runs:
   using: "composite"
   steps:
     - name: Build the image itself
+      shell: bash
       run: docker build -t ${{ inputs.tag }} -f docker/Dockerfile .
