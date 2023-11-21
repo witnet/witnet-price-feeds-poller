@@ -436,7 +436,7 @@ def handle_loop(
                   del pf["secs"][0]
 
             else:
-              secs_until_next_check = pf['cooldown'] - elapsed_secs - total_finalization_secs
+              secs_until_next_check = pf['cooldown'] - current_ts + pf["lastUpdateFailedTimestamp"] - total_finalization_secs
               if secs_until_next_check > 0:
                 print(f"{caption} .. resting for another {secs_until_next_check} secs before next triggering check")
         
