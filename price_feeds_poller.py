@@ -225,17 +225,22 @@ def handle_loop(
     while True:
       print()
       loop_ts = int(time.time())
-      
       balance = w3.eth.getBalance(web3_from)
       time_left_secs = time_to_die_secs(balance, pfs)
       timer_out = (loop_ts - low_balance_ts) >= 900
       if time_left_secs > 0:
         if time_left_secs <= 86400 * 3 and timer_out:
-          # start warning every 900 seconds if estimated time before draiing funds is less than 3 days
-          low_balance_ts = loop_ts
-          print(f"LOW FUNDS !!!: estimated {round(time_left_secs / 3600, 2)} hours before running out of funds")
-        else:
-          print(f"Time-To-Die: {round(time_left_secs / 3600, 2)} hours")
+            # start warning every 900 seconds if estimated time before draining funds is less than 3 days
+            low_balance_ts = loop_ts
+            time_left_hours = time_left_secs / 3600
+            if time_left_hours < 1:
+              print("LOW FUNDS !!!: estimated less than 1 hour before running out of funds")
+            elif time_left_hours < 10:
+              estimate = math.floor(time_left_hours)
+              print(f"LOW FUNDS !!!: estimated less than {estimate} hours before running out of funds")
+            else:
+              estimate = math.ceil(time_left_hours / 10) * 10
+              print(f"LOW FUNDS !!!: estimated less than {estimate} hours before running out of funds")
 
       latest_prices = feeds.functions.latestPrices(ids).call()
       
