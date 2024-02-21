@@ -54,7 +54,7 @@ def handle_requestUpdate(
         print( " - Tx. gas limit :", "{:,}".format(web3_gas))
 
       # Estimate evm+witnet fee
-      fee = feeds.functions.estimateUpdateBaseFee(feed_id, web3_gas_price, 0).call()
+      fee = feeds.functions.estimateUpdateBaseFee(web3_gas_price).call()
       print(f" - Tx. value     : {round(fee / 10 ** 18, 5)} {web3_symbol}")
 
       # Send Web3 transaction ..
@@ -102,17 +102,17 @@ def handle_requestUpdate(
       print(f"   $$ Transaction reverted !!")
       return [ -1, tx.hex() ]
     else:
-      requestId = 0
-      logs = feeds.events.PostedRequest().processReceipt(receipt, errors=DISCARD)
-      if len(logs) > 0:        
-        requestId = logs[0].args.queryId
-        if requestId > 0:
-          print(f" <<<< Request id : {requestId}\n")
+      queryId = 0
+      logs = feeds.events.WitnetQuery().processReceipt(receipt, errors=DISCARD)
+      if len(logs) > 0:     
+        queryId = logs[0].args.id
+        if queryId > 0:
+          print(f" <<<< Query id : {queryId}\n")
         else:
           print(f" <<<< Synchronous update.\n")
-        return [ requestId, tx.hex(), total_fee ]
+        return [ queryId, tx.hex(), total_fee ]
       else:
-        print(f" ==== Previous request id : {feed_latest_update_query_id}\n")
+        print(f" ==== Previous query id : {feed_latest_update_query_id}\n")
         return [ feed_latest_update_query_id, tx.hex(), total_fee ]
 
 def handle_loop(
@@ -155,8 +155,8 @@ def handle_loop(
             cooldown = config['feeds'][caption].get("minSecsBetweenUpdates", 0)
             deviation = config['feeds'][caption].get("deviationPercentage", 0.0)
             heartbeat = int(config['feeds'][caption].get("maxSecsBetweenUpdates", 0))
-            solverAddr = feeds.functions.lookupPriceSolver(pf_id).call()
-            routed = solverAddr != "0x0000000000000000000000000000000000000000"
+            priceSolver = feeds.functions.lookupPriceSolver(pf_id).call()
+            routed = priceSolver[0] != "0x0000000000000000000000000000000000000000"
             if routed == False:
               bytecode = feeds.functions.lookupBytecode(pf_id).call()
               rad_hash = feeds.functions.lookupRadHash(pf_id).call().hex()
@@ -190,7 +190,7 @@ def handle_loop(
             })
             print(f"  => ID4         : {pf_id}")
             if routed == True:
-              print(f"  => Solver addr : {solverAddr}")
+              print(f"  => Solver addr : {priceSolver[0]}")
             else:
               print(f"  => RAD hash    : {rad_hash}")
               print(f"  => Deviation   : {deviation} %")
