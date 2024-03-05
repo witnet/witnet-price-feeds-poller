@@ -104,7 +104,7 @@
           },
           {
             "internalType": "uint64",
-            "name": "witnessingFee",
+            "name": "witnessingFeeNanoWit",
             "type": "uint64"
           }
         ],
@@ -153,7 +153,7 @@
           },
           {
             "internalType": "uint64",
-            "name": "witnessingFee",
+            "name": "witnessingFeeNanoWit",
             "type": "uint64"
           }
         ],
@@ -244,10 +244,22 @@
         "type": "uint256"
       },
       {
+        "components": [
+          {
+            "internalType": "uint8",
+            "name": "committeeSize",
+            "type": "uint8"
+          },
+          {
+            "internalType": "uint64",
+            "name": "witnessingFeeNanoWit",
+            "type": "uint64"
+          }
+        ],
         "indexed": false,
-        "internalType": "uint64",
-        "name": "witTotalFee",
-        "type": "uint64"
+        "internalType": "struct WitnetV2.RadonSLA",
+        "name": "witnetSLA",
+        "type": "tuple"
       }
     ],
     "name": "WitnetQuery",
@@ -269,26 +281,7 @@
         "type": "uint256"
       }
     ],
-    "name": "WitnetQueryReported",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "id",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "evmReward",
-        "type": "uint256"
-      }
-    ],
-    "name": "WitnetQueryRewardUpgraded",
+    "name": "WitnetQueryResponse",
     "type": "event"
   },
   {
@@ -313,7 +306,7 @@
         "type": "uint256"
       }
     ],
-    "name": "WitnetResponseDelivered",
+    "name": "WitnetQueryResponseDelivered",
     "type": "event"
   },
   {
@@ -350,7 +343,26 @@
         "type": "string"
       }
     ],
-    "name": "WitnetResponseDeliveryFailed",
+    "name": "WitnetQueryResponseDeliveryFailed",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "evmReward",
+        "type": "uint256"
+      }
+    ],
+    "name": "WitnetQueryRewardUpgraded",
     "type": "event"
   },
   {
@@ -718,7 +730,7 @@
               },
               {
                 "internalType": "uint64",
-                "name": "witnessingFee",
+                "name": "witnessingFeeNanoWit",
                 "type": "uint64"
               }
             ],
@@ -1074,7 +1086,7 @@
           },
           {
             "internalType": "uint64",
-            "name": "witnessingFee",
+            "name": "witnessingFeeNanoWit",
             "type": "uint64"
           }
         ],
@@ -1105,7 +1117,7 @@
           },
           {
             "internalType": "uint64",
-            "name": "witnessingFee",
+            "name": "witnessingFeeNanoWit",
             "type": "uint64"
           }
         ],
