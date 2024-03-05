@@ -158,8 +158,8 @@ def handle_loop(
             priceSolver = feeds.functions.lookupPriceSolver(pf_id).call()
             routed = priceSolver[0] != "0x0000000000000000000000000000000000000000"
             if routed == False:
-              bytecode = feeds.functions.lookupBytecode(pf_id).call()
-              rad_hash = feeds.functions.lookupRadHash(pf_id).call().hex()
+              bytecode = feeds.functions.lookupWitnetBytecode(pf_id).call()
+              rad_hash = feeds.functions.lookupWitnetRadHash(pf_id).call().hex()
             else:
               bytecode = ""
               rad_hash = ""
@@ -260,7 +260,7 @@ def handle_loop(
 
           # Detect eventual RAD updates:
           if timer_out and pf['isRouted'] == False:
-            rad_hash = feeds.functions.lookupRadHash(id).call().hex()
+            rad_hash = feeds.functions.lookupWitnetRadHash(id).call().hex()
             if pf['radHash'] != rad_hash:
               config = load_price_feeds_config(feeds_config_file_path, network_name)
               print(f"{caption} <> contract RAD hash changed to {rad_hash}")
@@ -274,7 +274,7 @@ def handle_loop(
                     pf["heartbeat"] = int(config['feeds'][pf['caption']].get("maxSecsBetweenUpdates", 0))
                   
                     # read from web3
-                    pf["bytecode"] = feeds.functions.lookupBytecode(id).call()
+                    pf["bytecode"] = feeds.functions.lookupWitnetBytecode(id).call()
 
                     # reset flags
                     pf["fees"].clear()
