@@ -87,7 +87,7 @@ def handle_requestUpdate(
       total_fee = balance - w3.eth.getBalance(web3_from)
       print( " > Tx. block num.:", "{:,}".format(receipt.get("blockNumber")))
       print( " > Tx. total gas :", "{:,}".format(receipt.get("gasUsed")))
-      print( " > Tx. total fee :", round(total_fee / 10 ** 18, 5), web3_symbol)
+      print( " > Tx. total cost:", round(total_fee / 10 ** 18, 5), web3_symbol)
 
     except exceptions.TimeExhausted:
       print(f"   ** Transaction is taking too long !!")
@@ -328,23 +328,24 @@ def handle_loop(
           # If still waiting for an update...
           if pf["pendingUpdate"] == True:
           
-            # A new valid result has just been detected:
-            if status == 2 and latest_price[1] >= pf["latestTimestamp"]:
+            if status == 2: ##and latest_price[1] >= pf["latestTimestamp"]:
+              # a finalized successfull report is detected 
               pf["lastUpdateFailed"] = False
               pf["latestPrice"] = latest_price[0]
               elapsed_secs = latest_price[1] - pf["latestTimestamp"] 
               pf["latestTimestamp"] = latest_price[1]
               pf["pendingUpdate"] = False
+
               print(f"{caption} << drTxHash: {latest_price[2].hex()} => updated to {latest_price[0] / 10 ** int(caption.strip().split('-')[2])} {config['feeds'][caption.strip()]['label']} (after {elapsed_secs} secs)")
               
-            # An invalid result has just been detected:
             elif status == 3:
+              # a finalized errored result is detected
               pf["pendingUpdate"] = False
               latest_response = feeds.functions.latestUpdateResponse(id).call()
               latest_error = feeds.functions.latestUpdateResultError(id).call()
               pf["lastUpdateFailed"] = True
               pf["lastUpdateFailedTimestamp"] = current_ts
-              print(f"{caption} >< drTxHash: {latest_response[2].hex()} => \"{str(latest_error[1])}\"")
+              print(f"{caption} >< drTxHash: {latest_response[3].hex()} => \"{str(latest_error[1])}\"")
 
             else:
               latest_update_query_id = pf["latestUpdateQueryId"]
@@ -587,10 +588,10 @@ def avg_fees(pfs):
     return 0
 
 def dry_run_request(bytecode, timeout_secs):
-  cmdline = "npx witnet-toolkit try-query --hex "
+  cmdline = "npx witnet-toolkit trace-query --hex "
   cmdline += bytecode.hex()
-  cmdline += " | tail -n 2 | head -n 1 | awk -F: '{ print $2 }' | sed 's/ //g' | tr -d \"│\""
-  
+  cmdline += " | tail -n 2 | head -n 1 | awk -F: '{ print $3 }' | sed 's/ //g' | tr -d \"│\""
+
   # Dry-run result needs to be fetched from temporary file, 
   # because of https://bugs.python.org/issue30154.
   with open("tmp.out", "w+") as output:
