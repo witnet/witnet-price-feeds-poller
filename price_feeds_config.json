@@ -1,5 +1,14 @@
 {
-  "abi": "./src/abi/WitnetPriceRouter.json",
+  "contracts": {
+    "legacy": {
+      "abi": "./src/abi/WitnetPriceRouter.json"
+    },
+    "2.0": {
+      "abi": "./src/abi/WitnetPriceFeeds.json",
+      "address": "0x1111AbA2164AcdC6D291b08DfB374280035E1111",
+      "pollingPeriod": 120000
+    }
+  },
   "chains": {
     "avalanche": {
       "name": "Avalanche",
@@ -404,31 +413,6 @@
         }
       }
     },
-    "optimism": {
-      "networks": {
-        "optimism.sepolia": {
-          "address": "",
-          "blockExplorer": "https://sepolia.etherscan.io/address/{address}",
-          "color": "#ff5599",
-          "name": "Optimism Sepolia",
-          "pollingPeriod": 1500000,
-          "feeds": {
-            "Price-ETH/USD-6": {
-              "label": "$",
-              "deviationPercentage": 1.0,
-              "maxSecsBetweenUpdates": 500,
-              "minSecsBetweenUpdates": 300
-            },
-            "Price-OP/USDT-6": {
-              "label": "₮",
-              "deviationPercentage": 1.0,
-              "maxSecsBetweenUpdates": 900,
-              "minSecsBetweenUpdates": 300
-            }
-          }
-        }
-      }
-    },
     "ethereum": {
       "networks": {
         "ethereum.sepolia": {
@@ -652,6 +636,27 @@
         }
       }
     },
+    "optimism": {
+      "name": "Optimism",
+      "networks": {
+          "optimism.sepolia": {
+            "blockExplorer": "https://sepolia-optimism.etherscan.io/address/{address}",
+            "name": "Optimism ETH/L2 Sepolia",
+            "version": "2.0",
+            "feeds": {
+              "Price-WIT/USDT-6": {
+                "maxSecsBetweenUpdates": 900
+              }
+            }
+          },
+          "optimism.mainnet": {
+              "blockExplorer": "https://optimistic.etherscan.io/address/{address}",
+              "mainnet": true,
+              "name": "Optimism ETH/L2 Mainnet",
+              "version": "2.0"
+          }
+      }
+    },
     "polygon": {
       "networks": {
         "polygon.goerli": {
@@ -798,5 +803,86 @@
         }
       }
     }
-  }
+  },
+  "currencies": {
+    "EUR": "€",
+    "KRW": "₩",
+    "USD": "$",
+    "USDC": "$",
+    "USDT": "₮" 
+  },
+  "conditions": {
+    "default": {
+        "deviationPercentage": 3.5,
+        "maxSecsBetweenUpdates": 86400,
+        "minSecsBetweenUpdates": 3600
+    },
+    "Price-CFX/USDT-6": {
+        "deviationPercentage": 1.0,
+        "maxSecsBetweenUpdates": 3600,
+        "minSecsBetweenUpdates": 300
+    },
+    "Price-DAI/USD-6": {
+        "deviationPercentage": 0.1,
+        "minSecsBetweenUpdates": 900
+    },
+    "Price-FRAX/USDT-6": {
+        "deviationPercentage": 0.25
+    },
+    "Price-GLINT/USDC-6": {
+        "deviationPercentage": 1.0
+    },
+    "Price-GLMR/USDT-6": {
+        "deviationPercentage": 1.0
+    },
+    "Price-HT/USDT-6": {
+        "deviationPercentage": 3.5
+    },
+    "Price-KAVA/USDT-6": {
+        "deviationPercentage": 0.5
+    },
+    "Price-KCS/USDT-6": {
+        "deviationPercentage": 0.5,
+        "maxSecsBetweenUpdates": 3600,
+        "minSecsBetweenUpdates": 3600
+    },
+    "Price-MJT/KCS-9": {
+        "deviationPercentage": 0.5
+    },
+    "Price-MOVR/USDT-6": {
+        "deviationPercentage": 1.0
+    },
+    "Price-OKT/USDT-6": {
+        "deviationPercentage": 0.5,
+        "maxSecsBetweenUpdates": 3600,
+        "minSecsBetweenUpdates": 300
+    },
+    "Price-OP/USDT-6": {
+        "deviationPercentage": 2.0
+    },
+    "Price-SAX/USDT-6": {
+        "deviationPercentage": 0.5
+    },
+    "Price-STELLA/USDT-6": {
+        "deviationPercentage": 1.0
+    },
+    "Price-SYS/USDT-6": {
+        "deviationPercentage": 1.0
+    },
+    "Price-TUSD/USDT-6": {
+        "deviationPercentage": 0.25,
+        "minSecsBetweenUpdates": 900
+    },
+    "Price-USDC/USD-6": {
+        "deviationPercentage": 0.1,
+        "minSecsBetweenUpdates": 900
+    },
+    "Price-USDT/USD-6": {
+        "deviationPercentage": 0.1,
+        "minSecsBetweenUpdates": 900
+    },
+    "Price-WIT/USDT-6": {
+        "deviationPercentage": 1.0
+    }
+}
 }

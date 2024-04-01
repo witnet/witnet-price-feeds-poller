@@ -9,7 +9,7 @@ import subprocess
 import sys
 import time
 
-from configs import load_price_feeds_config, load_version
+from configs import get_currency_symbol, get_network_config, get_price_feed_config, load_dfe_config, load_version
 from contracts import feeds_contract
 from dotenv import load_dotenv
 from io import StringIO
@@ -115,11 +115,121 @@ def handle_requestUpdate(
         print(f" ==== Previous query id : {feed_latest_update_query_id}\n")
         return [ feed_latest_update_query_id, tx.hex(), total_fee ]
 
+def reload_config(config_file_path, network_name):
+    config = load_dfe_config(config_file_path)
+    network_config = get_network_config(config, network_name)
+    if network_config['version'] != '2.0':
+      print(f"Fatal: Network '{network_name}' not prepared for 2.0")
+      exit(1)
+    return config, network_config.get('address', config['contracts']['2.0']['address'])
+
+def reload_pfs(feeds, config, network_name):
+    
+  captionMaxLength = 0
+  ids = []
+  pfs = []    
+
+  supports = feeds.functions.supportedFeeds().call()
+  for index in range(len(supports) - 1):
+    caption = supports[1][index]
+    pf_id = supports[0][index].hex()
+    rad_hash = supports[2][index].hex()
+      
+    print(f"{caption}:")
+    routed = rad_hash.startswith("0000000000000000000000000000000000000000")
+    if routed == False:
+      cooldown = get_price_feed_config(config, network_name, caption, "minSecsBetweenUpdate", 3600)
+      deviation = get_price_feed_config(config, network_name, caption, "deviationPercentage", 3.5)
+      heartbeat = int(get_price_feed_config(config, network_name, caption, "maxSecsBetweenUpdates", 86400))
+      for attempt in range(5):
+        try:    
+          if routed == False:
+            bytecode = feeds.functions.lookupWitnetBytecode(pf_id).call()  
+          else:
+            bytecode = ""
+          latest_price = feeds.functions.latestPrice(pf_id).call()
+          latest_update_query_id = feeds.functions.latestUpdateQueryId(pf_id).call()
+          pending_update = latest_price[3] == 1
+          ids.append(pf_id)
+          pfs.append({
+            "id": pf_id,
+            "bytecode": bytecode,
+            "caption": caption,
+            "cooldown": cooldown,
+            "deviation": deviation,
+            "heartbeat": heartbeat,
+            "isRouted": routed,
+            "latestPrice": latest_price[0],
+            "latestTimestamp": latest_price[1],
+            "latestUpdateQueryId": latest_update_query_id,
+            "pendingUpdate": pending_update,
+            "radHash": rad_hash,
+            "revert": 0,
+            "auto_disabled": False,
+            "lastRevertedTx": "",
+            "lastUpdateFailed": False,
+            "lastUpdateFailedTimestamp": int(time.time()),
+            "fees": [],
+            "secs": []
+          })
+          print(f"  => ID4         : {pf_id}")
+          if routed == True:
+            print(f"  => Solver addr : {rad_hash[24:]}")
+          else:
+            print(f"  => RAD hash    : {rad_hash}")
+            print(f"  => Deviation   : {deviation} %")
+            print(f"  => Bytecode    : {bytecode.hex()}")
+            if heartbeat > 0:
+              print(f"  => Heartbeat   : {heartbeat} seconds")
+            if cooldown > 0:
+              print(f"  => Cooldown    : {cooldown} seconds")
+          if latest_update_query_id > 0:
+              if (latest_price[1] > 0):
+                decimals = int(caption.split('-')[2])
+                quote = caption.split('-')[1].split('/')[1]
+                print(f"  => Last price  : {latest_price[0] / 10 ** decimals} {get_currency_symbol(config, quote)}")
+                print(f"  => Last update : {datetime.datetime.fromtimestamp(latest_price[1]).strftime('%Y-%m-%d %H:%M:%S %Z')}")
+              print(f"  => Last query  : {latest_update_query_id} (pending: {pending_update})")
+          print()
+          break
+        except Exception as ex:
+          if attempt < 4:
+            print(f"  >< Attempt #{attempt}: {unscape(ex)}")
+            continue
+          else:
+            print(f"  >< Skipped: Exception: {unscape(ex)}")
+            break
+      
+      if len(caption) > captionMaxLength:
+        captionMaxLength = len(caption)
+  
+  return ids, pfs, captionMaxLength
+
+def reload_pfs_params(pfs, config, network_name):
+  for pf in pfs:
+    caption = pf["caption"]
+    routed = pf["radHash"].startswith("0000000000000000000000000000000000000000")
+    if routed == False:
+      cooldown = get_price_feed_config(config, network_name, caption, "minSecsBetweenUpdate", 3600)
+      deviation = get_price_feed_config(config, network_name, caption, "deviationPercentage", 3.5)
+      heartbeat = int(get_price_feed_config(config, network_name, caption, "maxSecsBetweenUpdates", 86400))
+      if cooldown != pf["cooldown"] or deviation != pf["deviation"] or heartbeat != pf["heartbeat"]:
+        print(f"{caption} changed parameters to:")
+        print(f"=> Deviation: {deviation} %")
+        print(f"=> Heartbeat: {heartbeat} seconds")
+        print(f"=> Cooldown : {cooldown} seconds\n")
+        pf["cooldown"] = cooldown
+        pf["deviation"] = deviation
+        pf["heartbeat"] = heartbeat  
+  
+  return pfs
+
 def handle_loop(
     w3,
     loop_interval_secs,
     csv_filename,
-    feeds_config_file_path,
+    config_file_path,
+    config_reload_secs,
     network_name,
     web3_symbol,
     web3_address,
@@ -133,117 +243,85 @@ def handle_loop(
     witnet_resolution_secs,
     witnet_toolkit_timeout_secs
   ):
-    config = load_price_feeds_config(feeds_config_file_path, network_name)
-    feeds = feeds_contract(w3, web3_address)
+    config, config_address = reload_config(config_file_path, network_name)
+    
+    feeds = feeds_contract(w3, web3_address or config_address)
     if feeds.address is None:
-      print("Fatal: invalid WitnetPriceFeeds address")
+      print("Fatal: invalid WitnetPriceFeeds address read from {feeds_config_file_path}")
       exit(1)
 
-    print(f"\nUsing WitnetBytecodes at    {feeds.functions.registry().call()}")
-    print(f"Using WitnetRequestBoard at {feeds.functions.witnet().call()}")
-    print(f"Using WitnetPriceFeeds at   {feeds.address}\n")
+    try:
+      print(f"Using WitnetOracle at {feeds.functions.witnet().call()}")
+      print(f"Using WitnetPriceFeeds at {feeds.address}")
+    except Exception as ex:
+      print(f"Uncompliant WitnetPriceFeeds at {feeds.address}")
+      exit(1)
+
+    print(f"\nOk, so let's poll every {loop_interval_secs} seconds...")
     
-    captionMaxLength = 0
-    ids = []
-    pfs = []    
-    for caption in config['feeds']:
-      pf_id = w3.solidityKeccak(['string'], [caption]).hex()[:10]
-      if feeds.functions.supportsCaption(caption).call():
-        print(f"{caption}:")
-        for attempt in range(5):
-          try:
-            cooldown = config['feeds'][caption].get("minSecsBetweenUpdates", 0)
-            deviation = config['feeds'][caption].get("deviationPercentage", 0.0)
-            heartbeat = int(config['feeds'][caption].get("maxSecsBetweenUpdates", 0))
-            priceSolver = feeds.functions.lookupPriceSolver(pf_id).call()
-            routed = priceSolver[0] != "0x0000000000000000000000000000000000000000"
-            if routed == False:
-              bytecode = feeds.functions.lookupWitnetBytecode(pf_id).call()
-              rad_hash = feeds.functions.lookupWitnetRadHash(pf_id).call().hex()
-            else:
-              bytecode = ""
-              rad_hash = ""
-            latest_price = feeds.functions.latestPrice(pf_id).call()
-            latest_update_query_id = feeds.functions.latestUpdateQueryId(pf_id).call()
-            pending_update = latest_price[3] == 1
-            ids.append(pf_id)
-            pfs.append({
-              "id": pf_id,
-              "bytecode": bytecode,
-              "caption": caption,
-              "cooldown": cooldown,
-              "deviation": deviation,
-              "heartbeat": heartbeat,
-              "isRouted": routed,
-              "latestPrice": latest_price[0],
-              "latestTimestamp": latest_price[1],
-              "latestUpdateQueryId": latest_update_query_id,
-              "pendingUpdate": pending_update,
-              "radHash": rad_hash,
-              "revert": 0,
-              "auto_disabled": False,
-              "lastRevertedTx": "",
-              "lastUpdateFailed": False,
-              "lastUpdateFailedTimestamp": int(time.time()),
-              "fees": [],
-              "secs": []
-            })
-            print(f"  => ID4         : {pf_id}")
-            if routed == True:
-              print(f"  => Solver addr : {priceSolver[0]}")
-            else:
-              print(f"  => RAD hash    : {rad_hash}")
-              print(f"  => Deviation   : {deviation} %")
-              print(f"  => Bytecode    : {bytecode.hex()}")
-              if heartbeat > 0:
-                print(f"  => Heartbeat   : {heartbeat} seconds")
-              if cooldown > 0:
-                print(f"  => Cooldown    : {cooldown} seconds")
-            if latest_update_query_id > 0:
-                if (latest_price[1] > 0):
-                  print(f"  => Last price  : {latest_price[0] / 10 ** int(caption.split('-')[2])} {config['feeds'][caption]['label']}")
-                  print(f"  => Last update : {datetime.datetime.fromtimestamp(latest_price[1]).strftime('%Y-%m-%d %H:%M:%S %Z')}")
-                print(f"  => Last query  : {latest_update_query_id} (pending: {pending_update})")
-            print()
-            break
-          except Exception as ex:
-            if attempt < 4:
-              print(f"  >< Attempt #{attempt}: {unscape(ex)}")
-              continue
-            else:
-              print(f"  >< Skipped: Exception: {unscape(ex)}")
-              break
-        
-        if len(caption) > captionMaxLength:
-          captionMaxLength = len(caption)
-
-      else:
-        print(f"{caption}: hashed as {pf_id}, currently not supported.")
-
-    if len(pfs) == 0:
-      print("Sorry, no price feeds to poll :/")
-      return
-
-    print(f"Ok, so let's poll every {loop_interval_secs} seconds...")
+    reload_ts = int(time.time())
     low_balance_ts = int(time.time()) - 900
     total_finalization_secs = web3_finalization_secs + witnet_resolution_secs
+
+    captionMaxLength = 0
+    footprint = None
+    ids = None
+    pfs = None    
+    
     while True:
+
       print()
       loop_ts = int(time.time())
       
       try:
+        # Reload configuration file every `config_reload_secs`...
+        if ids is None or (loop_ts - reload_ts) >= config_reload_secs:
+          reload_ts = loop_ts
+          
+          try:
+            config, config_address = reload_config(config_file_path, network_name)
+          except:
+            print(f"Warning: cannot reload configuration from {config_file_path}\n")
+            continue
+          
+          if web3_address is None:
+            if config_address != feeds.address:
+              print(f"Trying to change WitnetPriceFeeds address...")
+              try:
+                new_feeds = feeds_contract(w3, config_address)
+                print(f"=> Using WitnetOracle at {new_feeds.functions.witnet().call()}")
+                print(f"=> Using WitnetPriceFeeds at {new_feeds.address}")
+                feeds = new_feeds
+              except Exception as ex:
+                print(f"=> Exception: {ex}")
+
+          new_footprint = feeds.functions.footprint().call().hex()
+          if footprint is None or new_footprint != footprint:
+            # Reload pfs and ids if the WPF contract's footprint changed 
+            if footprint is not None:
+                print(f"Reloading price feeds due to a footprint change detected on WitnetPriceFeeds at {feeds.address}...\n")            
+            footprint = new_footprint
+            ids, pfs, captionMaxLength = reload_pfs(feeds, config, network_name)
+            
+          else:
+            # Otherwise revisit config parameters for each currently support price feed
+            pfs = reload_pfs_params(pfs, config, network_name)
+
+        # Check balance on every `loop_interval_secs`
         balance = w3.eth.getBalance(web3_from)
         time_left_secs = time_to_die_secs(balance, pfs)
-        timer_out = (loop_ts - low_balance_ts) >= 900
+        timer_out = (loop_ts - low_balance_ts) >= config_reload_secs
         if time_left_secs > 0:
           if time_left_secs <= 86400 * 3 and timer_out:
-            # start warning every 900 seconds if estimated time before draiing funds is less than 3 days
+            # start warning every 900 seconds if estimated time before draining funds is less than 3 days
             low_balance_ts = loop_ts
             print(f"LOW FUNDS !!!: estimated {round(time_left_secs / 3600, 2)} hours before running out of funds")
           else:
             print(f"Time-To-Die: {round(time_left_secs / 3600, 2)} hours")
 
+         # On every iteration, read latest prices of all currently supported pfs
         latest_prices = feeds.functions.latestPrices(ids).call()
+      
       except Exception as ex:
         print(f"Main loop exception: {unscape(ex)}")
         time.sleep(1)
@@ -256,51 +334,11 @@ def handle_loop(
         caption = pf['caption']
         caption += " " * (captionMaxLength - len(caption))
 
-        try:
+        decimals = int(caption.split('-')[2])
+        quote = caption.split('-')[1].split('/')[1]
+        symbol = get_currency_symbol(config, quote)
 
-          # Detect eventual RAD updates:
-          if timer_out and pf['isRouted'] == False:
-            rad_hash = feeds.functions.lookupWitnetRadHash(id).call().hex()
-            if pf['radHash'] != rad_hash:
-              config = load_price_feeds_config(feeds_config_file_path, network_name)
-              print(f"{caption} <> contract RAD hash changed to {rad_hash}")
-              pf['radHash'] = rad_hash
-              if rad_hash != "0x0000000000000000000000000000000000000000000000000000000000000000":
-                for attempt in range(5):
-                  try:
-                    # read from config
-                    pf["cooldown"] = int(config['feeds'][pf['caption']].get("minSecsBetweenUpdates", 0))
-                    pf["deviation"] = config['feeds'][pf['caption']].get("deviationPercentage", 0.0)
-                    pf["heartbeat"] = int(config['feeds'][pf['caption']].get("maxSecsBetweenUpdates", 0))
-                  
-                    # read from web3
-                    pf["bytecode"] = feeds.functions.lookupWitnetBytecode(id).call()
-
-                    # reset flags
-                    pf["fees"].clear()
-                    pf["secs"].clear()
-                    pf["auto_disabled"] = False
-                    pf["isRouted"] = False
-                    pf["lastRevertedTx"] = ""
-                    pf["lastUpdateFailed"] = False
-                    pf["lastUpdateFailedTimestamp"] = int(time.time())
-                    pf["pendingUpdate"] = False
-                    pf["reverts"] = 0
-                    break
-                  except Exception as ex:
-                    if attempt < 4:
-                      print(f"{caption} >< refreshing contract state attempt #{attempt}: {unscape(ex)}")
-                      time.sleep(1)
-                    else:
-                      raise ex
-              else:
-                # reset flags
-                pf["auto_disabled"] = True
-                pf["bytecode"] = ""
-                pf["isRouted"] = False
-                pf["lastRevertedTx"] = ""
-                pf["pendingUpdate"] = False   
-                pf["lastUpdateFailed"] = False            
+        try:     
 
           if pf["auto_disabled"]:
             # Skip if this pricefeed is disabled
@@ -319,7 +357,8 @@ def handle_loop(
           # On routed pfs: just check for spontaneous price updates
           if pf["isRouted"] == True:
             if latest_price[1] > pf["latestTimestamp"]:
-              print(f"{caption} <> routed price updated to {latest_price[0] / 10 ** int(caption.strip().split('-')[2])} {config['feeds'][caption.strip()]['label']}")
+              
+              print(f"{caption} <> routed price updated to {latest_price[0] / 10 ** int(decimals)} {symbol}")
               pf["latestTimestamp"] = latest_price[1]
             else:
               print(f"{caption} .. expecting eventual routed update.")
@@ -336,7 +375,7 @@ def handle_loop(
               pf["latestTimestamp"] = latest_price[1]
               pf["pendingUpdate"] = False
 
-              print(f"{caption} << drTxHash: {latest_price[2].hex()} => updated to {latest_price[0] / 10 ** int(caption.strip().split('-')[2])} {config['feeds'][caption.strip()]['label']} (after {elapsed_secs} secs)")
+              print(f"{caption} << drTallyTxHash: {latest_price[2].hex()} => updated to {latest_price[0] / 10 ** int(decimals)} {symbol} (after {elapsed_secs} secs)")
               
             elif status == 3:
               # a finalized errored result is detected
@@ -345,7 +384,7 @@ def handle_loop(
               latest_error = feeds.functions.latestUpdateResultError(id).call()
               pf["lastUpdateFailed"] = True
               pf["lastUpdateFailedTimestamp"] = current_ts
-              print(f"{caption} >< drTxHash: {latest_response[3].hex()} => \"{str(latest_error[1])}\"")
+              print(f"{caption} >< drTallyTxHash: {latest_response[3].hex()} => \"{str(latest_error[1])}\"")
 
             else:
               latest_update_query_id = pf["latestUpdateQueryId"]
@@ -401,7 +440,7 @@ def handle_loop(
                 csv_filename,
                 feeds,
                 id,
-                rad_hash,
+                pf["radHash"],
                 pf["latestUpdateQueryId"],
                 web3_symbol,
                 web3_from,
@@ -455,6 +494,9 @@ def main(args):
     print(load_version())
     load_dotenv()
 
+    # Read config reload period
+    config_reload_secs = int(os.getenv('WPFP_CONFIG_RELEOAD_SECS') or 30)
+
     # Read network parameters from environment:
     network_name = os.getenv('WPFP_NETWORK_NAME')
     network_timeout_secs = int(os.getenv('WPFP_NETWORK_TIMEOUT_SECS') or 60)
@@ -478,6 +520,7 @@ def main(args):
 
     # Echo timers set-up:
     print(f"Loop interval period  : {'{:,}'.format(args.loop_interval_secs)}\"")
+    print(f"Config reload period  : {'{:,}'.format(config_reload_secs)}\"")
     print(f"Web3 finalization time: {'{:,}'.format(web3_finalization_secs)}\"")
     print(f"Witnet resolution time: {'{:,}'.format(witnet_resolution_secs)}\"")
     print(f"Witnet toolkit timeout: {'{:,}'.format(witnet_toolkit_timeout_secs)}\"")
@@ -487,8 +530,8 @@ def main(args):
     if config_path is None:
       print(f"Fatal: no config path was set!")
       exit(1)
-    elif load_price_feeds_config(config_path, network_name) is None:
-      print(f"Fatal: no configuration available for network '{network_name}'")
+    elif load_dfe_config(config_path) is None:
+      print(f"Fatal: cannot read configuration file")
       exit(1)
     
     # Create Web3 object
@@ -561,6 +604,7 @@ def main(args):
       args.loop_interval_secs,
       args.csv_file,
       config_path,
+      config_reload_secs,
       network_name,
       web3_symbol,
       web3_address,
@@ -641,10 +685,10 @@ def time_to_die_secs(balance, pfs):
       pf_secs = pf["heartbeat"]    
     if pf_secs > 0:
       if len(pf["fees"]) > 0:    
-        pf_fee = sum(pf["fees"]) / len(pf["fees"])
+        pf_fees = sum(pf["fees"]) / len(pf["fees"])
       else:
-        pf_fee = total_avg_fee
-      total_speed += (pf_fee / pf_secs)
+        pf_fees = total_avg_fee
+      total_speed += (pf_fees / pf_secs)
   if total_speed > 0:
     return balance / total_speed
   else:
