@@ -130,7 +130,7 @@ def reload_pfs(feeds, config, network_name):
   pfs = []    
 
   supports = feeds.functions.supportedFeeds().call()
-  for index in range(len(supports) - 1):
+  for index in range(len(supports[0])):
     caption = supports[1][index]
     pf_id = supports[0][index].hex()
     rad_hash = supports[2][index].hex()
