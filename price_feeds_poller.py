@@ -130,10 +130,10 @@ def reload_pfs(feeds, config, network_name):
   pfs = []    
 
   supports = feeds.functions.supportedFeeds().call()
-  for (pf_id_bytes, caption_bytes, rad_hash_bytes) in zip(*supports):
-    caption = caption_bytes.hex()
-    pf_id = pf_id_bytes.hex()
-    rad_hash = rad_hash_bytes.hex()
+  for index in range(len(supports[0])):
+    caption = supports[1][index]
+    pf_id = supports[0][index].hex()
+    rad_hash = supports[2][index].hex()
       
     print(f"{caption}:")
     routed = rad_hash.startswith("0000000000000000000000000000000000000000")
