@@ -130,10 +130,10 @@ def reload_pfs(feeds, config, network_name):
   pfs = []    
 
   supports = feeds.functions.supportedFeeds().call()
-  for index in range(len(supports[0])):
-    caption = supports[1][index]
-    pf_id = supports[0][index].hex()
-    rad_hash = supports[2][index].hex()
+  for (pf_id_bytes, caption_bytes, rad_hash_bytes) in zip(*supports):
+    caption = caption_bytes.hex()
+    pf_id = pf_id_bytes.hex()
+    rad_hash = rad_hash_bytes.hex()
       
     print(f"{caption}:")
     routed = rad_hash.startswith("0000000000000000000000000000000000000000")
@@ -143,10 +143,7 @@ def reload_pfs(feeds, config, network_name):
       heartbeat = int(get_price_feed_config(config, network_name, caption, "maxSecsBetweenUpdates", 86400))
       for attempt in range(5):
         try:    
-          if routed == False:
-            bytecode = feeds.functions.lookupWitnetBytecode(pf_id).call()  
-          else:
-            bytecode = ""
+          bytecode = feeds.functions.lookupWitnetBytecode(pf_id).call()  
           latest_price = feeds.functions.latestPrice(pf_id).call()
           latest_update_query_id = feeds.functions.latestUpdateQueryId(pf_id).call()
           pending_update = latest_price[3] == 1
@@ -173,16 +170,13 @@ def reload_pfs(feeds, config, network_name):
             "secs": []
           })
           print(f"  => ID4         : {pf_id}")
-          if routed == True:
-            print(f"  => Solver addr : {rad_hash[24:]}")
-          else:
-            print(f"  => RAD hash    : {rad_hash}")
-            print(f"  => Deviation   : {deviation} %")
-            print(f"  => Bytecode    : {bytecode.hex()}")
-            if heartbeat > 0:
-              print(f"  => Heartbeat   : {heartbeat} seconds")
-            if cooldown > 0:
-              print(f"  => Cooldown    : {cooldown} seconds")
+          print(f"  => RAD hash    : {rad_hash}")
+          print(f"  => Deviation   : {deviation} %")
+          print(f"  => Bytecode    : {bytecode.hex()}")
+          if heartbeat > 0:
+            print(f"  => Heartbeat   : {heartbeat} seconds")
+          if cooldown > 0:
+            print(f"  => Cooldown    : {cooldown} seconds")
           if latest_update_query_id > 0:
               if (latest_price[1] > 0):
                 decimals = int(caption.split('-')[2])
