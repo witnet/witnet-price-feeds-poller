@@ -27,11 +27,5 @@ def get_currency_symbol(config, currency):
 
 def get_price_feed_config(config, network_name, caption, param, default):
   network_config = get_network_config(config, network_name)
-  value = network_config.get('feeds', {}).get(caption, {}).get(param, None)
-  if value is None:
-    value = config['conditions'].get(caption, {}).get(param, None)
-    if value is None:
-      value = config['conditions']['default'].get(param, None)
-      if value is None:
-        value = default
+  value = network_config.get('feeds', {}).get(caption, {}).get(param, None) or config['conditions'].get(caption, {}).get(param, None) or config['conditions']['default'].get(param, default)
   return value
