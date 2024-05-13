@@ -138,7 +138,7 @@ def reload_pfs(feeds, config, network_name):
     print(f"{caption}:")
     routed = rad_hash.startswith("0000000000000000000000000000000000000000")
     if routed == False:
-      cooldown = get_price_feed_config(config, network_name, caption, "minSecsBetweenUpdate", 3600)
+      cooldown = get_price_feed_config(config, network_name, caption, "minSecsBetweenUpdates", 3600)
       deviation = get_price_feed_config(config, network_name, caption, "deviationPercentage", 3.5)
       heartbeat = int(get_price_feed_config(config, network_name, caption, "maxSecsBetweenUpdates", 86400))
       for attempt in range(5):
@@ -210,7 +210,7 @@ def reload_pfs_params(pfs, config, network_name):
     caption = pf["caption"]
     routed = pf["radHash"].startswith("0000000000000000000000000000000000000000")
     if routed == False:
-      cooldown = get_price_feed_config(config, network_name, caption, "minSecsBetweenUpdate", 3600)
+      cooldown = get_price_feed_config(config, network_name, caption, "minSecsBetweenUpdates", 3600)
       deviation = get_price_feed_config(config, network_name, caption, "deviationPercentage", 3.5)
       heartbeat = int(get_price_feed_config(config, network_name, caption, "maxSecsBetweenUpdates", 86400))
       if cooldown != pf["cooldown"] or deviation != pf["deviation"] or heartbeat != pf["heartbeat"]:
