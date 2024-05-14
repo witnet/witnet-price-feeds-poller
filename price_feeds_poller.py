@@ -136,7 +136,7 @@ def reload_pfs(feeds, config, network_name):
     rad_hash = supports[2][index].hex()
       
     print(f"{caption}:")
-    routed = rad_hash.startswith("0000000000000000000000000000000000000000")
+    routed = rad_hash.endswith("000000000000000000000000")
     if routed == False:
       cooldown = get_price_feed_config(config, network_name, caption, "minSecsBetweenUpdates", 3600)
       deviation = get_price_feed_config(config, network_name, caption, "deviationPercentage", 3.5)
@@ -196,13 +196,17 @@ def reload_pfs(feeds, config, network_name):
       
       if len(caption) > captionMaxLength:
         captionMaxLength = len(caption)
+    else:
+      print(f"  => ID4         : {pf_id}")
+      print(f"  => Dependencies: {feeds.functions.lookupPriceSolver(pf_id).call()[1]}")
+      print()
   
   return ids, pfs, captionMaxLength
 
 def reload_pfs_params(pfs, config, network_name):
   for pf in pfs:
     caption = pf["caption"]
-    routed = pf["radHash"].startswith("0000000000000000000000000000000000000000")
+    routed = pf["radHash"].endswith("000000000000000000000000")
     if routed == False:
       cooldown = get_price_feed_config(config, network_name, caption, "minSecsBetweenUpdates", 3600)
       deviation = get_price_feed_config(config, network_name, caption, "deviationPercentage", 3.5)
