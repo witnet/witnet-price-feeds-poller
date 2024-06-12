@@ -309,7 +309,7 @@ def handle_loop(
         balance = w3.eth.getBalance(web3_from)
         time_left_secs = time_to_die_secs(balance, pfs)
         timer_out = (loop_ts - low_balance_ts) >= config_reload_secs
-        if time_left_secs > 0:
+        if time_left_secs >= 0:
           if time_left_secs <= 86400 * 3 and timer_out:
             # start warning every 900 seconds if estimated time before draining funds is less than 3 days
             low_balance_ts = loop_ts
